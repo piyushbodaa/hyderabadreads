@@ -2,10 +2,159 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hyderabad Reads</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Hyderabad Reads · Our shared library</title>
+    <meta name="description" content="Every book on the Hyderabad Reads shelves, in one place. Find one you like and ask its owner to bring it to the next meetup." />
+    <meta name="theme-color" content="#0f0c0a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://hyderabadreads.fun/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hyderabadreads.fun/" />
+    <meta property="og:title" content="Hyderabad Reads · Our shared library" />
+    <meta property="og:description" content="Every book on our shelves, in one place. Find one you like, ask its owner to bring it next weekend." />
+    <meta property="og:image" content="https://hyderabadreads.fun/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
-  <body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#14110f;color:#f3e9d7;font-family:Georgia,serif">
-    <p>Hyderabad Reads — the shelves are being built.</p>
+  <body>
+    <a class="skip" href="#library">Skip to the library</a>
+
+    <header class="topbar" data-topbar>
+      <a class="brand" href="#top" aria-label="Hyderabad Reads, home">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M5 30V15.5C5 9.6 9.6 5.4 16 2c6.4 3.4 11 7.6 11 13.5V30" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+          <rect x="10" y="16" width="3.2" height="12" rx=".6" fill="currentColor" />
+          <rect x="14.4" y="13" width="3.2" height="15" rx=".6" fill="currentColor" opacity=".72" />
+          <rect x="18.8" y="17.5" width="3.2" height="10.5" rx=".6" fill="currentColor" opacity=".5" transform="rotate(-9 20.4 28)" />
+        </svg>
+        <span class="brand__name">Hyderabad Reads</span>
+      </a>
+      <nav class="topnav" aria-label="Sections">
+        <a href="#library">Library</a>
+        <a href="#readers">Readers</a>
+        <a href="#join" class="topnav__cta">Add your books</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <canvas class="hero__dust" data-dust aria-hidden="true"></canvas>
+        <div class="hero__books" data-hero-books></div>
+        <div class="hero__inner">
+          <p class="kicker">Weekend book club · Hyderabad</p>
+          <h1 id="hero-title" class="hero__title">Every book on <em>our shelves</em>, in one place.</h1>
+          <p class="hero__lede">
+            Members list the books they're happy to lend or swap. Browse the shelves, find one you'd like, and ask its
+            owner to bring it to the next meetup.
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--primary" href="#library">Browse the library</a>
+            <button class="btn btn--ghost" type="button" data-surprise>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.2 5.3 5.8.5-4.4 3.8 1.3 5.6L10 13.8l-4.9 2.9 1.3-5.6L2 7.3l5.8-.5z" fill="currentColor" /></svg>
+              Surprise me
+            </button>
+          </div>
+          <dl class="stats" data-stats></dl>
+        </div>
+      </section>
+
+      <section id="library" class="library" aria-labelledby="library-title">
+        <div class="section-head">
+          <h2 id="library-title" class="section-title">The shelves</h2>
+          <p class="section-sub" data-result-count></p>
+        </div>
+
+        <div class="controls" data-controls>
+          <label class="search">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M13 13l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+            <span class="visually-hidden">Search books</span>
+            <input type="search" placeholder="Search title, author, reader…" autocomplete="off" spellcheck="false" data-search />
+            <kbd aria-hidden="true">/</kbd>
+          </label>
+          <div class="segmented" role="radiogroup" aria-label="Arrange shelves by" data-arrange>
+            <span class="segmented__pill" aria-hidden="true"></span>
+            <button type="button" role="radio" aria-checked="true" data-value="reader">Reader</button>
+            <button type="button" role="radio" aria-checked="false" data-value="genre">Genre</button>
+            <button type="button" role="radio" aria-checked="false" data-value="colour">Colour</button>
+            <button type="button" role="radio" aria-checked="false" data-value="decade">Decade</button>
+          </div>
+        </div>
+        <div class="chips" role="group" aria-label="Show books from" data-chips></div>
+
+        <div class="bookcase-frame">
+          <div class="bookcase" role="list" aria-label="Books" data-bookcase>
+            <div class="bookcase__tip" aria-hidden="true" data-tip></div>
+          </div>
+          <p class="bookcase__empty" hidden data-empty></p>
+        </div>
+        <p class="library__hint">Pick any book to take it off the shelf.</p>
+      </section>
+
+      <section id="readers" class="readers" aria-labelledby="readers-title">
+        <div class="section-head">
+          <h2 id="readers-title" class="section-title">Readers</h2>
+          <p class="section-sub">Whose shelf is whose. Tap a reader to see just their books.</p>
+        </div>
+        <ul class="reader-grid" data-readers></ul>
+      </section>
+
+      <section id="join" class="join" aria-labelledby="join-title">
+        <div class="join__card">
+          <h2 id="join-title" class="section-title">Put your books on the shelf</h2>
+          <ol class="steps">
+            <li>
+              <span class="steps__n">1</span>
+              <div><strong>Pick 5–10 books</strong> you're happy to lend or swap.</div>
+            </li>
+            <li>
+              <span class="steps__n">2</span>
+              <div><strong>Send the titles</strong> to Piyush on the club group, or add them yourself on GitHub.</div>
+            </li>
+            <li>
+              <span class="steps__n">3</span>
+              <div><strong>They appear here</strong> about a minute later, cover and all.</div>
+            </li>
+          </ol>
+          <div class="join__actions">
+            <a class="btn btn--primary" href="https://github.com/piyushbodaa/hyderabadreads/edit/main/src/data/library.js" target="_blank" rel="noopener">Edit the list on GitHub</a>
+          </div>
+          <h3 class="join__sub">How borrowing works</h3>
+          <p class="join__text">
+            Open a book and tap <em>Ask to bring it</em>. That copies a message you can paste in the group. Pick it up
+            at the next meetup, and bring it back when you're done.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Made with chai in Hyderabad · <a href="https://github.com/piyushbodaa/hyderabadreads" target="_blank" rel="noopener">Source</a></p>
+      <p class="footer__covers">Covers and dates from <a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a>.</p>
+    </footer>
+
+    <div class="viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-title" hidden data-viewer>
+      <div class="viewer__backdrop" data-close></div>
+      <div class="viewer__stage" data-stage>
+        <div class="viewer__spot" aria-hidden="true"></div>
+        <div class="viewer__floor" aria-hidden="true" data-floor></div>
+        <div class="book3d" data-book3d></div>
+        <p class="viewer__gesture" aria-hidden="true">Drag to turn · double-tap to flip</p>
+      </div>
+      <article class="viewer__info" data-info></article>
+      <button class="viewer__close" type="button" aria-label="Close" data-close>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+      </button>
+      <button class="viewer__nav viewer__nav--prev" type="button" aria-label="Previous book" data-prev>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4L6.5 10l6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+      <button class="viewer__nav viewer__nav--next" type="button" aria-label="Next book" data-next>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+    </div>
+
+    <div class="toast" role="status" aria-live="polite" data-toast></div>
+
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

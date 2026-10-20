@@ -31,7 +31,9 @@ export class Viewer {
       else if (e.target.closest('[data-ask]')) this.ask()
       else if (e.target.closest('[data-link]')) this.copyLink()
     })
-    el.addEventListener('keydown', (e) => this.key(e))
+    // On the document, not the dialog: swapping books replaces the focused
+    // button, and keys must keep working when focus drops to <body>.
+    document.addEventListener('keydown', (e) => this.isOpen && this.key(e))
     this.stage.addEventListener('pointerdown', (e) => this.dragStart(e))
     this.stage.addEventListener('pointermove', (e) => this.pointer(e))
     this.stage.addEventListener('pointerup', (e) => this.dragEnd(e))
@@ -192,6 +194,7 @@ export class Viewer {
     this.build(book)
     this.renderInfo(book)
     this.resetPose()
+    this.el.querySelector('[data-ask]')?.focus({ preventScroll: true })
     this.holder.getAnimations().forEach((a) => a.cancel())
     this.info.getAnimations().forEach((a) => a.cancel())
     const slow = reduceMotion.matches ? 1 : 420

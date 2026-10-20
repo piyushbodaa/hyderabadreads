@@ -59,7 +59,7 @@ function barcode(seed) {
   let bars = ''
   let s = seed
   while (x < 92) {
-    s = (s * 1103515245 + 12345) >>> 0
+    s = (Math.imul(s, 1103515245) + 12345) >>> 0
     const w = 1 + (s % 3)
     if ((s >> 8) & 1) bars += `<rect x="${x}" width="${w}" height="34" />`
     x += w + 1

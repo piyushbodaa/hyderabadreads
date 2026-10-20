@@ -1970,6 +1970,7 @@ kbd {
   }
 
   .search {
+    flex: none;
     max-width: none;
   }
 

@@ -49,7 +49,8 @@ new IntersectionObserver(
     bookcase.enter()
     obs.disconnect()
   },
-  { threshold: 0.12 },
+  // As soon as the top shelf is comfortably on screen, however tall the case.
+  { rootMargin: '0px 0px -140px 0px' },
 ).observe($('[data-bookcase]'))
 
 // Search

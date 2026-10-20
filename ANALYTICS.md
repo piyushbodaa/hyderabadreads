@@ -1,5 +1,6 @@
 # Google Analytics integration
 
+- Property: `559877699`
 - Measurement ID: `G-KQ5C6LHH8R`
 - Web stream: `16169803215` — Hyderabad Reads website
 - URL: `https://hyderabadreads.fun`
@@ -10,7 +11,7 @@
 
 This branch adds one deferred `/analytics.js` script to the current scaffold's head and its loader at `public/analytics.js`. Carry **both** changes into the actual website build. Do not replace the real site with this placeholder. This branch is not a production deployment.
 
-The loader runs only on `hyderabadreads.fun` and `www.hyderabadreads.fun`. It ignores localhost and preview hosts, prevents repeated initialization, strips query strings/fragments from page location and referrer, and uses a fixed page title. Google Signals and ad-personalization signals are disabled in the tag. No User-ID, member details, book submissions, custom events, or advertising integration is added.
+The loader runs only on `hyderabadreads.fun` and `www.hyderabadreads.fun`. It ignores localhost and preview hosts, prevents repeated initialization, strips query strings/fragments from page location and referrer, and uses a fixed page title. The prepared tag sets Google Signals and ad-personalization signals to false. This draft is not deployed; approval of the property-level ad-personalization setting is pending, and this code must not be deployed as an indirect workaround for that approval. Property-level Google Signals and user-provided data collection were verified off by default. No User-ID, member details, book submissions, custom events, or advertising integration is added.
 
 GA4 still uses its normal analytics cookies/device identifiers. This is not anonymous or cookieless analytics. Add an appropriate privacy disclosure and any consent flow needed for the audience before launch. If the site later introduces personal data in URL paths, member pages, or client-side navigation, review the instrumentation before enabling those flows. Query stripping intentionally omits UTM campaign attribution. Only initial document pageviews are implemented; SPA route tracking is not added.
 

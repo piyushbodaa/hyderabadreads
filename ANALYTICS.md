@@ -19,4 +19,4 @@ GA4 still uses its normal analytics cookies/device identifiers. This is not anon
 
 Run `node --test tests/analytics.test.mjs` and `npm run build`. Tests stub the browser and send no events to Google. Local and preview visits deliberately cannot test live ingestion.
 
-After the real site is deployed, visit the production URL once, confirm the tag request and measurement ID in browser developer tools, then confirm the pageview in GA4 Realtime. Do not claim live collection based only on the build or tag presence. At preparation time the production domain returned Vercel `DEPLOYMENT_NOT_FOUND`, so live collection remains unverified.
+After the real site is deployed, visit the production URL once, confirm the tag request and measurement ID in browser developer tools, then confirm the pageview in GA4 Realtime. Do not claim live collection based only on the build or tag presence. During preparation the production domain initially returned Vercel `DEPLOYMENT_NOT_FOUND`, then independently began serving the placeholder. This branch did not deploy it, and Analytics is not yet installed on that live placeholder. Live collection remains unverified.

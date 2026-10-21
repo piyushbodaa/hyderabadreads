@@ -10,6 +10,7 @@ import { Bookcase } from './lib/bookcase.js'
 import { Viewer } from './lib/viewer.js'
 import { startDust } from './lib/dust.js'
 import { escape } from './lib/render.js'
+import { meetups, VENUES, TIME, INSTAGRAM } from './data/meetups.js'
 
 const $ = (sel) => document.querySelector(sel)
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
@@ -152,6 +153,67 @@ $('[data-readers]').addEventListener('click', (e) => {
   selectReader(card.dataset.reader)
   $('#library').scrollIntoView({ behavior: reduceMotion.matches ? 'auto' : 'smooth' })
 })
+
+// Meetups: a card for the next one, and a calendar of the month it falls in.
+function renderMeetups() {
+  const pad = (n) => String(n).padStart(2, '0')
+  const now = new Date()
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  const dateOf = (iso) => new Date(`${iso}T00:00`)
+  const all = meetups
+    .map((m) => ({ ...m, area: VENUES[m.venue]?.area ?? '', time: m.time ?? VENUES[m.venue]?.time ?? TIME }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+  if (!all.length) return ''
+  const next = all.find((m) => m.date >= today)
+  const maps = (m) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${m.venue}, ${m.area}, Hyderabad`)}`
+
+  const card = next
+    ? `<article class="next-meetup">
+        <p class="next-meetup__eyebrow">${next.date === today ? 'Today' : 'Next meetup'}</p>
+        <h3 class="next-meetup__date">${dateOf(next.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+        <p class="next-meetup__venue">${escape(next.venue)}${next.area ? ` <span>· ${escape(next.area)}</span>` : ''}</p>
+        <p class="next-meetup__time">${escape(next.time)}</p>
+        <a class="btn btn--primary" href="${maps(next)}" target="_blank" rel="noopener">Open in Maps</a>
+      </article>`
+    : `<article class="next-meetup">
+        <p class="next-meetup__eyebrow">Next meetup</p>
+        <h3 class="next-meetup__date">Dates coming soon</h3>
+        <p class="next-meetup__note">The next calendar goes up on Instagram first.</p>
+        <a class="btn btn--primary" href="${INSTAGRAM}" target="_blank" rel="noopener">Follow @hyderabadreads</a>
+      </article>`
+
+  const month = (next ?? all.at(-1)).date.slice(0, 7)
+  const [year, mon] = month.split('-').map(Number)
+  const byDate = new Map()
+  for (const m of all) byDate.set(m.date, [...(byDate.get(m.date) ?? []), m])
+  const lead = new Date(year, mon - 1, 1).getDay()
+  const days = new Date(year, mon, 0).getDate()
+  const cells = Array.from({ length: lead }, () => '<div class="cal__day is-blank"></div>')
+  for (let d = 1; d <= days; d++) {
+    const iso = `${month}-${pad(d)}`
+    const list = byDate.get(iso) ?? []
+    const flags = [list.length && 'has-meetup', iso < today && 'is-past', iso === today && 'is-today', iso === next?.date && 'is-next']
+    const when = dateOf(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    cells.push(`
+      <div class="cal__day ${flags.filter(Boolean).join(' ')}">
+        <span class="cal__n">${d}</span>
+        ${list.length ? `<span class="cal__when">${when}</span>` : ''}
+        ${list
+          .map((m) => `<a class="cal__venue" href="${maps(m)}" target="_blank" rel="noopener">${escape(m.venue)}</a><span class="cal__area">${escape(m.area)}</span><span class="cal__time">${escape(m.time)}</span>`)
+          .join('')}
+      </div>`)
+  }
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((w) => `<span class="cal__dow" aria-hidden="true">${w}</span>`)
+
+  return `${card}
+    <div class="cal">
+      <h3 class="cal__month">${dateOf(`${month}-01`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</h3>
+      <div class="cal__grid">${weekdays.join('')}${cells.join('')}</div>
+    </div>`
+}
+const meetupsHTML = renderMeetups()
+if (meetupsHTML) $('[data-meetups]').innerHTML = meetupsHTML
+else $('#meetups').hidden = true
 
 // Surprise me: scroll a random book into view, then take it off the shelf.
 document.querySelectorAll('[data-surprise]').forEach((btn) =>

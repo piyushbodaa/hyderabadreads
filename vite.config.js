@@ -10,8 +10,13 @@ export default defineConfig({
   plugins: [serverPlugin()],
   build: {
     rollupOptions: {
-      // Vercel serves dist/404.html for any address that doesn't exist.
-      input: { main: page('index.html'), notFound: page('404.html') },
+      input: {
+        main: page('index.html'),
+        // Vercel serves dist/404.html for any address that doesn't exist.
+        notFound: page('404.html'),
+        me: page('me.html'),
+        admin: page('admin.html'),
+      },
     },
   },
 })

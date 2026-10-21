@@ -14,6 +14,23 @@ The shared library of our weekend book club: every book members are happy to len
 
 A brand-new database starts with the shelves and calendar in [`src/data/`](src/data). Those books are placeholders, so every shelf is marked as a **sample** until its owner adds real books.
 
+## Members
+
+Members sign in with a personal link, so there are no passwords, emails or phone numbers to collect. An admin makes the link at [/admin](https://hyderabadreads.fun/admin) and sends it on WhatsApp. The member opens it, and lands on [/me](https://hyderabadreads.fun/me), where they can:
+
+- add books by searching Open Library, scanning the barcode, or typing them in;
+- write a note for each book;
+- keep or clear their sample books.
+
+The database only stores a hash of each link. Making someone a new link cancels their old one.
+
+For the very first admin, before anyone can make links on the site, print one from a terminal:
+
+```sh
+vercel env pull .env.production.local --environment production
+node --env-file=.env.production.local scripts/invite.mjs Piyush
+```
+
 ## Running locally
 
 ```sh

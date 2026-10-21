@@ -24,7 +24,9 @@
     "@fontsource/fraunces": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@neondatabase/serverless": "^1.2.0",
+    "barcode-detector": "^3.2.3",
     "satori": "^0.63.2",
-    "sharp": "^0.35.5"
+    "sharp": "^0.35.5",
+    "zxing-wasm": "^3.1.6"
   }
 }

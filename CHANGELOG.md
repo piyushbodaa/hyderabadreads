@@ -4,6 +4,15 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Members manage their own shelves
+
+- Every member signs in with their own link. There's no password or email: an admin makes the link at **/admin** and sends it on WhatsApp.
+- **My shelf** (/me) is where members add books. They search by title, author or ISBN, or **scan the barcode** with the phone camera, and the cover and spine colours fill themselves in. They can also type a book in by hand.
+- Members can add a note to each book ("Margins full of scribbles"), change its genre or language, or take it off the shelf.
+- Sample shelves can be kept ("Yes, they're really mine") or cleared with one tap.
+- Admins add, rename and remove members, make admins, and make new sign-in links. A new link cancels the old one.
+- The header's "Add your books" becomes "My shelf" once you're signed in.
+
 ### The library moves into a database, and every book gets its own page
 
 - The shelves, members and meetup calendar now live in a Postgres database (Neon, through Vercel) instead of a file in the code. This is the groundwork for members managing their own shelves and loans.

@@ -18,12 +18,12 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://*.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://*.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
         },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=(), payment=(), usb=()" },
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }
       ]
     },
@@ -45,7 +45,12 @@
     { "source": "/llms-full.txt", "destination": "/api/feeds?feed=llms-full" },
     { "source": "/library.json", "destination": "/api/feeds?feed=json" },
     { "source": "/sitemap.xml", "destination": "/api/feeds?feed=sitemap" },
-    { "source": "/meetups.ics", "destination": "/api/feeds?feed=ics" }
+    { "source": "/meetups.ics", "destination": "/api/feeds?feed=ics" },
+    { "source": "/join/:token", "destination": "/api/app?route=join&token=:token" },
+    { "source": "/media/:file", "destination": "/api/app?route=media&file=:file" },
+    { "source": "/me", "destination": "/me.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/api/:route", "destination": "/api/app?route=:route" }
   ],
   "redirects": [
     { "source": "/", "has": [{ "type": "host", "value": "www.hyderabadreads.fun" }], "destination": "https://hyderabadreads.fun/", "permanent": true },

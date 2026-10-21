@@ -10,6 +10,14 @@ import { Bookcase } from './lib/bookcase.js'
 import { Viewer } from './lib/viewer.js'
 import { startDust } from './lib/dust.js'
 import { escape } from './lib/render.js'
+import { looksSignedIn } from './lib/api.js'
+
+// Signed-in members get straight to their own shelf from the header.
+if (looksSignedIn()) {
+  const mine = document.querySelector('[data-mine]')
+  mine.href = '/me'
+  mine.textContent = 'My shelf'
+}
 
 // The server writes the whole library into the page; everything below draws it.
 loadLibrary(readPageData())

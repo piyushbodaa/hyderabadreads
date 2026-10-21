@@ -74,6 +74,30 @@ export const MIGRATIONS = [
       )`,
     ],
   },
+  {
+    id: 2,
+    name: 'sign-in',
+    statements: [
+      // Personal sign-in links. Only a hash of each token is stored.
+      `CREATE TABLE IF NOT EXISTS invites (
+        token_hash text PRIMARY KEY,
+        member_id int NOT NULL REFERENCES members (id),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        used_at timestamptz,
+        last_used_at timestamptz,
+        revoked_at timestamptz
+      )`,
+      `CREATE INDEX IF NOT EXISTS invites_member ON invites (member_id)`,
+      `CREATE TABLE IF NOT EXISTS sessions (
+        token_hash text PRIMARY KEY,
+        member_id int NOT NULL REFERENCES members (id),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        expires_at timestamptz NOT NULL,
+        last_seen_at timestamptz
+      )`,
+      `CREATE INDEX IF NOT EXISTS sessions_member ON sessions (member_id)`,
+    ],
+  },
 ]
 
 export async function migrate(db, { seed = true } = {}) {

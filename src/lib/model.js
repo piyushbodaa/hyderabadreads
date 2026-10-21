@@ -84,11 +84,14 @@ for (const reader of readers) {
   }
 }
 
-export const readerList = readers.map((r) => ({
-  name: r.name,
-  hue: hash(r.name) % 360,
-  books: books.filter((b) => b.owner === r.name),
-}))
+// Readers are shown alphabetically, whatever order library.js lists them in.
+export const readerList = readers
+  .map((r) => ({
+    name: r.name,
+    hue: hash(r.name) % 360,
+    books: books.filter((b) => b.owner === r.name),
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
 
 export const genreColour = (genre) => GENRES[genre] ?? `hsl(${hash(genre) % 360} 45% 62%)`
 

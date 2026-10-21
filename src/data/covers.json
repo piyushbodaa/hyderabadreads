@@ -1,4 +1,15 @@
 {
+  "a-brief-history-of-time-hawking": {
+    "isbn": null,
+    "olKey": "/works/OL1892617W",
+    "year": 1988,
+    "pages": 241,
+    "cover": "covers/a-brief-history-of-time-hawking.webp",
+    "width": 326,
+    "height": 500,
+    "color": "#020202",
+    "accent": "#56472b"
+  },
   "a-suitable-boy-seth": {
     "isbn": null,
     "olKey": "/works/OL11930W",
@@ -9,6 +20,17 @@
     "height": 500,
     "color": "#7a5727",
     "accent": "#17160c"
+  },
+  "and-then-there-were-none-christie": {
+    "isbn": null,
+    "olKey": "/works/OL471565W",
+    "year": 1939,
+    "pages": 222,
+    "cover": "covers/and-then-there-were-none-christie.webp",
+    "width": 318,
+    "height": 500,
+    "color": "#131519",
+    "accent": "#fd0e14"
   },
   "atomic-habits-clear": {
     "isbn": null,
@@ -21,6 +43,17 @@
     "color": "#e9e6d5",
     "accent": "#886955"
   },
+  "autobiography-of-a-yogi-yogananda": {
+    "isbn": null,
+    "olKey": "/works/OL528094W",
+    "year": 1946,
+    "pages": 514,
+    "cover": "covers/autobiography-of-a-yogi-yogananda.webp",
+    "width": 307,
+    "height": 500,
+    "color": "#d5d7d5",
+    "accent": "#f36318"
+  },
   "becoming-obama": {
     "isbn": null,
     "olKey": "/works/OL17930367W",
@@ -32,6 +65,28 @@
     "color": "#b5cbcb",
     "accent": "#09172a"
   },
+  "before-the-coffee-gets-cold-kawaguchi": {
+    "isbn": null,
+    "olKey": "/works/OL20019347W",
+    "year": 2015,
+    "pages": 240,
+    "cover": "covers/before-the-coffee-gets-cold-kawaguchi.webp",
+    "width": 330,
+    "height": 500,
+    "color": "#fcf7f4",
+    "accent": "#64b6b8"
+  },
+  "born-a-crime-noah": {
+    "isbn": null,
+    "olKey": "/works/OL17824318W",
+    "year": 2016,
+    "pages": 304,
+    "cover": "covers/born-a-crime-noah.webp",
+    "width": 319,
+    "height": 500,
+    "color": "#e7e5db",
+    "accent": "#34498a"
+  },
   "circe-miller": {
     "isbn": null,
     "olKey": "/works/OL18012166W",
@@ -42,6 +97,17 @@
     "height": 500,
     "color": "#dc8838",
     "accent": "#372417"
+  },
+  "crime-and-punishment-dostoevsky": {
+    "isbn": null,
+    "olKey": "/works/OL45018229W",
+    "year": 1956,
+    "pages": 582,
+    "cover": "covers/crime-and-punishment-dostoevsky.webp",
+    "width": 299,
+    "height": 500,
+    "color": "#d6c6ab",
+    "accent": "#d79985"
   },
   "deep-work-newport": {
     "isbn": null,
@@ -76,6 +142,50 @@
     "color": "#dcd7c6",
     "accent": "#87131a"
   },
+  "eleanor-oliphant-is-completely-fine-honeyman": {
+    "isbn": null,
+    "olKey": "/works/OL19781733W",
+    "year": 2017,
+    "pages": 352,
+    "cover": "covers/eleanor-oliphant-is-completely-fine-honeyman.webp",
+    "width": 331,
+    "height": 500,
+    "color": "#63c9d2",
+    "accent": "#694633"
+  },
+  "foundation-asimov": {
+    "isbn": null,
+    "olKey": "/works/OL46125W",
+    "year": 1951,
+    "pages": 240,
+    "cover": "covers/foundation-asimov.webp",
+    "width": 289,
+    "height": 500,
+    "color": "#e6d5bd",
+    "accent": "#262818"
+  },
+  "freakonomics-levitt": {
+    "isbn": null,
+    "olKey": "/works/OL278022W",
+    "year": 2005,
+    "pages": 320,
+    "cover": "covers/freakonomics-levitt.webp",
+    "width": 336,
+    "height": 500,
+    "color": "#171619",
+    "accent": "#0566a7"
+  },
+  "gitanjali-tagore": {
+    "isbn": null,
+    "olKey": "/works/OL308575W",
+    "year": 1910,
+    "pages": 94,
+    "cover": "covers/gitanjali-tagore.webp",
+    "width": 333,
+    "height": 500,
+    "color": "#2b2417",
+    "accent": "#d57a28"
+  },
   "gone-girl-flynn": {
     "isbn": null,
     "olKey": "/works/OL16239762W",
@@ -86,6 +196,28 @@
     "height": 500,
     "color": "#18191c",
     "accent": "#242629"
+  },
+  "guns-germs-and-steel-diamond": {
+    "isbn": null,
+    "olKey": "/works/OL276558W",
+    "year": 1997,
+    "pages": 528,
+    "cover": "covers/guns-germs-and-steel-diamond.webp",
+    "width": 329,
+    "height": 500,
+    "color": "#fdfdfd",
+    "accent": "#656669"
+  },
+  "harry-potter-and-the-philosophers-stone-rowling": {
+    "isbn": "9781408855652",
+    "olKey": "/works/OL82563W",
+    "year": 1997,
+    "pages": 302,
+    "cover": "covers/harry-potter-and-the-philosophers-stone-rowling.webp",
+    "width": 334,
+    "height": 500,
+    "color": "#020205",
+    "accent": "#19143b"
   },
   "ikigai-garcia": {
     "isbn": null,
@@ -98,6 +230,28 @@
     "color": "#69b2bc",
     "accent": "#5ba7b4"
   },
+  "into-the-wild-krakauer": {
+    "isbn": null,
+    "olKey": "/works/OL1974546W",
+    "year": 1996,
+    "pages": 284,
+    "cover": "covers/into-the-wild-krakauer.webp",
+    "width": 310,
+    "height": 475,
+    "color": "#f7fbfd",
+    "accent": "#87b8d7"
+  },
+  "jaya-pattanaik": {
+    "isbn": null,
+    "olKey": "/works/OL19948770W",
+    "year": 2010,
+    "pages": 349,
+    "cover": "covers/jaya-pattanaik.webp",
+    "width": 372,
+    "height": 500,
+    "color": "#fdc704",
+    "accent": "#f87716"
+  },
   "klara-and-the-sun-ishiguro": {
     "isbn": null,
     "olKey": "/works/OL20883297W",
@@ -109,6 +263,28 @@
     "color": "#e64a2e",
     "accent": "#77a59c"
   },
+  "little-women-alcott": {
+    "isbn": null,
+    "olKey": "/works/OL29983W",
+    "year": 1848,
+    "pages": 423,
+    "cover": "covers/little-women-alcott.webp",
+    "width": 295,
+    "height": 500,
+    "color": "#a49b8a",
+    "accent": "#576905"
+  },
+  "long-walk-to-freedom-mandela": {
+    "isbn": null,
+    "olKey": "/works/OL1783377W",
+    "year": 1994,
+    "pages": 643,
+    "cover": "covers/long-walk-to-freedom-mandela.webp",
+    "width": 316,
+    "height": 500,
+    "color": "#060608",
+    "accent": "#473808"
+  },
   "mans-search-for-meaning-frankl": {
     "isbn": "9780807014271",
     "olKey": "/works/OL1268413W",
@@ -119,6 +295,17 @@
     "height": 466,
     "color": "#a98b79",
     "accent": "#c8642d"
+  },
+  "meditations-aurelius": {
+    "isbn": null,
+    "olKey": "/works/OL1317211W",
+    "year": 1626,
+    "pages": 203,
+    "cover": "covers/meditations-aurelius.webp",
+    "width": 298,
+    "height": 500,
+    "color": "#fefabd",
+    "accent": "#fefcc1"
   },
   "midnights-children-rushdie": {
     "isbn": null,
@@ -164,6 +351,17 @@
     "color": "#fdfdfd",
     "accent": "#262725"
   },
+  "persepolis-satrapi": {
+    "isbn": null,
+    "olKey": "/works/OL5735175W",
+    "year": 2000,
+    "pages": 352,
+    "cover": "covers/persepolis-satrapi.webp",
+    "width": 330,
+    "height": 500,
+    "color": "#25242b",
+    "accent": "#e9dcd9"
+  },
   "pride-and-prejudice-austen": {
     "isbn": "9780141439518",
     "olKey": "/works/OL66554W",
@@ -185,6 +383,17 @@
     "height": 500,
     "color": "#151515",
     "accent": "#77490b"
+  },
+  "rebecca-maurier": {
+    "isbn": null,
+    "olKey": "/works/OL36633W",
+    "year": 1938,
+    "pages": 386,
+    "cover": "covers/rebecca-maurier.webp",
+    "width": 291,
+    "height": 500,
+    "color": "#151418",
+    "accent": "#14284a"
   },
   "rich-dad-poor-dad-kiyosaki": {
     "isbn": null,
@@ -219,6 +428,50 @@
     "color": "#070809",
     "accent": "#fc5b35"
   },
+  "siddhartha-hesse": {
+    "isbn": null,
+    "olKey": "/works/OL872932W",
+    "year": 1922,
+    "pages": 138,
+    "cover": "covers/siddhartha-hesse.webp",
+    "width": 296,
+    "height": 500,
+    "color": "#020302",
+    "accent": "#86887a"
+  },
+  "sophies-world-gaarder": {
+    "isbn": null,
+    "olKey": "/works/OL922430W",
+    "year": 1991,
+    "pages": 523,
+    "cover": "covers/sophies-world-gaarder.webp",
+    "width": 295,
+    "height": 500,
+    "color": "#e6e1ce",
+    "accent": "#e8e3d1"
+  },
+  "steve-jobs-isaacson": {
+    "isbn": null,
+    "olKey": "/works/OL16085155W",
+    "year": 2011,
+    "pages": 664,
+    "cover": "covers/steve-jobs-isaacson.webp",
+    "width": 323,
+    "height": 500,
+    "color": "#dbd8d5",
+    "accent": "#282524"
+  },
+  "the-7-habits-of-highly-effective-people-covey": {
+    "isbn": null,
+    "olKey": "/works/OL2629977W",
+    "year": 1989,
+    "pages": 374,
+    "cover": "covers/the-7-habits-of-highly-effective-people-covey.webp",
+    "width": 325,
+    "height": 500,
+    "color": "#020237",
+    "accent": "#020128"
+  },
   "the-alchemist-coelho": {
     "isbn": null,
     "olKey": "/works/OL796465W",
@@ -229,6 +482,17 @@
     "height": 500,
     "color": "#b9a967",
     "accent": "#c5b876"
+  },
+  "the-bell-jar-plath": {
+    "isbn": "9780571268863",
+    "olKey": "/works/OL1865528W",
+    "year": 1948,
+    "pages": 262,
+    "cover": "covers/the-bell-jar-plath.webp",
+    "width": 317,
+    "height": 500,
+    "color": "#b5091e",
+    "accent": "#b97766"
   },
   "the-book-thief-zusak": {
     "isbn": null,
@@ -241,6 +505,61 @@
     "color": "#1a1914",
     "accent": "#884b36"
   },
+  "the-count-of-monte-cristo-dumas": {
+    "isbn": "9780140449266",
+    "olKey": "/works/OL36287W",
+    "year": 1830,
+    "pages": 593,
+    "cover": "covers/the-count-of-monte-cristo-dumas.webp",
+    "width": 313,
+    "height": 500,
+    "color": "#020304",
+    "accent": "#cbc498"
+  },
+  "the-courage-to-be-disliked-kishimi": {
+    "isbn": null,
+    "olKey": "/works/OL19744000W",
+    "year": 2013,
+    "pages": 280,
+    "cover": "covers/the-courage-to-be-disliked-kishimi.webp",
+    "width": 326,
+    "height": 500,
+    "color": "#fdfefe",
+    "accent": "#e7e8e9"
+  },
+  "the-da-vinci-code-brown": {
+    "isbn": null,
+    "olKey": "/works/OL76837W",
+    "year": 2003,
+    "pages": 489,
+    "cover": "covers/the-da-vinci-code-brown.webp",
+    "width": 310,
+    "height": 500,
+    "color": "#a88956",
+    "accent": "#863917"
+  },
+  "the-diary-of-a-young-girl-frank": {
+    "isbn": "9780553296983",
+    "olKey": "/works/OL266178W",
+    "year": 1944,
+    "pages": 285,
+    "cover": "covers/the-diary-of-a-young-girl-frank.webp",
+    "width": 296,
+    "height": 500,
+    "color": "#030202",
+    "accent": "#160a0b"
+  },
+  "the-girl-with-the-dragon-tattoo-larsson": {
+    "isbn": null,
+    "olKey": "/works/OL5784622W",
+    "year": 2005,
+    "pages": 576,
+    "cover": "covers/the-girl-with-the-dragon-tattoo-larsson.webp",
+    "width": 319,
+    "height": 500,
+    "color": "#e9b50e",
+    "accent": "#e4ad0e"
+  },
   "the-god-of-small-things-roy": {
     "isbn": null,
     "olKey": "/works/OL1052133W",
@@ -251,6 +570,39 @@
     "height": 500,
     "color": "#2a2725",
     "accent": "#666949"
+  },
+  "the-godfather-puzo": {
+    "isbn": "9780451205766",
+    "olKey": "/works/OL1673205W",
+    "year": 1969,
+    "pages": 450,
+    "cover": "covers/the-godfather-puzo.webp",
+    "width": 299,
+    "height": 450,
+    "color": "#020202",
+    "accent": "#fdfdfd"
+  },
+  "the-great-gatsby-fitzgerald": {
+    "isbn": null,
+    "olKey": "/works/OL468431W",
+    "year": 1920,
+    "pages": 185,
+    "cover": "covers/the-great-gatsby-fitzgerald.webp",
+    "width": 333,
+    "height": 500,
+    "color": "#025378",
+    "accent": "#024c6c"
+  },
+  "the-guide-narayan": {
+    "isbn": null,
+    "olKey": "/works/OL1057183W",
+    "year": 1958,
+    "pages": 223,
+    "cover": "covers/the-guide-narayan.webp",
+    "width": 311,
+    "height": 500,
+    "color": "#080909",
+    "accent": "#997946"
   },
   "the-hitchhikers-guide-to-the-galaxy-adams": {
     "isbn": null,
@@ -285,6 +637,17 @@
     "color": "#dbbc87",
     "accent": "#dab57a"
   },
+  "the-hunger-games-collins": {
+    "isbn": null,
+    "olKey": "/works/OL5735363W",
+    "year": 2008,
+    "pages": 397,
+    "cover": "covers/the-hunger-games-collins.webp",
+    "width": 313,
+    "height": 500,
+    "color": "#ac9488",
+    "accent": "#594b44"
+  },
   "the-immortals-of-meluha-tripathi": {
     "isbn": "9789380658742",
     "olKey": "/works/OL15914981W",
@@ -295,6 +658,17 @@
     "height": 411,
     "color": "#041619",
     "accent": "#0a6567"
+  },
+  "the-intelligent-investor-graham": {
+    "isbn": null,
+    "olKey": "/works/OL273184W",
+    "year": 1949,
+    "pages": 360,
+    "cover": "covers/the-intelligent-investor-graham.webp",
+    "width": 307,
+    "height": 500,
+    "color": "#cbb685",
+    "accent": "#baa57a"
   },
   "the-kite-runner-hosseini": {
     "isbn": null,
@@ -340,6 +714,28 @@
     "color": "#19233c",
     "accent": "#15364a"
   },
+  "the-monk-who-sold-his-ferrari-sharma": {
+    "isbn": null,
+    "olKey": "/works/OL276492W",
+    "year": 1996,
+    "pages": 216,
+    "cover": "covers/the-monk-who-sold-his-ferrari-sharma.webp",
+    "width": 328,
+    "height": 500,
+    "color": "#897719",
+    "accent": "#a9a618"
+  },
+  "the-name-of-the-wind-rothfuss": {
+    "isbn": null,
+    "olKey": "/works/OL8479867W",
+    "year": 2007,
+    "pages": 736,
+    "cover": "covers/the-name-of-the-wind-rothfuss.webp",
+    "width": 313,
+    "height": 500,
+    "color": "#080a0a",
+    "accent": "#ccc689"
+  },
   "the-namesake-lahiri": {
     "isbn": null,
     "olKey": "/works/OL2001056W",
@@ -362,6 +758,17 @@
     "color": "#557738",
     "accent": "#293927"
   },
+  "the-prophet-gibran": {
+    "isbn": null,
+    "olKey": "/works/OL318900W",
+    "year": 1923,
+    "pages": 112,
+    "cover": "covers/the-prophet-gibran.webp",
+    "width": 317,
+    "height": 500,
+    "color": "#1c1b1c",
+    "accent": "#373535"
+  },
   "the-psychology-of-money-housel": {
     "isbn": null,
     "olKey": "/works/OL21640039W",
@@ -373,6 +780,50 @@
     "color": "#764627",
     "accent": "#59361c"
   },
+  "the-road-mccarthy": {
+    "isbn": null,
+    "olKey": "/works/OL40873W",
+    "year": 2006,
+    "pages": 256,
+    "cover": "covers/the-road-mccarthy.webp",
+    "width": 324,
+    "height": 500,
+    "color": "#231f20",
+    "accent": "#b79454"
+  },
+  "the-room-on-the-roof-bond": {
+    "isbn": null,
+    "olKey": "/works/OL62930W",
+    "year": 1956,
+    "pages": 153,
+    "cover": "covers/the-room-on-the-roof-bond.webp",
+    "width": 314,
+    "height": 475,
+    "color": "#e35b54",
+    "accent": "#786858"
+  },
+  "the-secret-history-tartt": {
+    "isbn": null,
+    "olKey": "/works/OL4321141W",
+    "year": 1992,
+    "pages": 608,
+    "cover": "covers/the-secret-history-tartt.webp",
+    "width": 329,
+    "height": 500,
+    "color": "#d6c7ab",
+    "accent": "#47854b"
+  },
+  "the-seven-husbands-of-evelyn-hugo-reid": {
+    "isbn": null,
+    "olKey": "/works/OL18203673W",
+    "year": 2017,
+    "pages": 400,
+    "cover": "covers/the-seven-husbands-of-evelyn-hugo-reid.webp",
+    "width": 316,
+    "height": 475,
+    "color": "#03361a",
+    "accent": "#05763c"
+  },
   "the-silent-patient-michaelides": {
     "isbn": null,
     "olKey": "/works/OL19096402W",
@@ -383,6 +834,17 @@
     "height": 500,
     "color": "#e9d9c7",
     "accent": "#fcf9f6"
+  },
+  "the-three-body-problem-liu": {
+    "isbn": "9780765382030",
+    "olKey": "/works/OL17267881W",
+    "year": 2008,
+    "pages": 417,
+    "cover": "covers/the-three-body-problem-liu.webp",
+    "width": 331,
+    "height": 500,
+    "color": "#165888",
+    "accent": "#377aa5"
   },
   "the-white-tiger-adiga": {
     "isbn": null,
@@ -417,6 +879,28 @@
     "color": "#282525",
     "accent": "#a68b95"
   },
+  "train-to-pakistan-singh": {
+    "isbn": null,
+    "olKey": "/works/OL318479W",
+    "year": 1956,
+    "pages": 206,
+    "cover": "covers/train-to-pakistan-singh.webp",
+    "width": 302,
+    "height": 475,
+    "color": "#080603",
+    "accent": "#073758"
+  },
+  "where-the-crawdads-sing-owens": {
+    "isbn": null,
+    "olKey": "/works/OL18766691W",
+    "year": 2018,
+    "pages": 416,
+    "cover": "covers/where-the-crawdads-sing-owens.webp",
+    "width": 331,
+    "height": 500,
+    "color": "#f9ab85",
+    "accent": "#080706"
+  },
   "wings-of-fire-kalam": {
     "isbn": "9788173711466",
     "olKey": "/works/OL1037811W",
@@ -427,6 +911,17 @@
     "height": 500,
     "color": "#888687",
     "accent": "#a9a8a5"
+  },
+  "wise-and-otherwise-murty": {
+    "isbn": null,
+    "olKey": "/works/OL13683225W",
+    "year": 2002,
+    "pages": 197,
+    "cover": "covers/wise-and-otherwise-murty.webp",
+    "width": 325,
+    "height": 500,
+    "color": "#f4f5f5",
+    "accent": "#86bc76"
   },
   "zero-to-one-thiel": {
     "isbn": null,

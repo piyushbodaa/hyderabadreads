@@ -22,13 +22,16 @@ GA4 still uses its usual cookies and device identifiers, so this isn't anonymous
 ## What it counts
 
 - Page loads, by address. Books have their own addresses (`/book/<id>`), so a book link opened from the club group counts as a visit to that book.
-- Three events for borrowing, the thing the site is for, sent through `src/lib/track.js` with no parameters: no names, owners or titles.
+- A few events, sent through `src/lib/track.js` with no parameters: no names, owners or titles.
 
 | Event | When |
 | --- | --- |
 | `ask_click` | Someone copies or shares an "Ask to bring it" message |
 | `borrow_request` | A signed-in member asks for a book |
 | `borrow_got` | A member marks a book as borrowed ("I've got it", often from a bookplate's QR code) |
+| `calendar_add` | Someone adds a meetup to their calendar, or subscribes to all of them |
+| `year_card` | A member shares or downloads their year card |
+| `app_install` | Someone installs the site as an app, on a phone or a computer |
 
 The number to watch is `borrow_request` per week: whether the library is being used, not just looked at.
 

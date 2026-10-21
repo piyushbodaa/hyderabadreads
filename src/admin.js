@@ -3,6 +3,7 @@
 import '@fontsource-variable/fraunces/opsz.css'
 import '@fontsource-variable/inter'
 import './styles.css'
+import './lib/pwa.js'
 
 import { api, toaster, copyText, whatsappLink } from './lib/api.js'
 import { escape } from './lib/render.js'

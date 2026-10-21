@@ -58,6 +58,18 @@ export class Viewer {
       this.pose.px = 0
       this.pose.py = 0
     })
+    // A cover that can't load (offline, and never seen before) gives way to
+    // the drawn front that books without a cover have.
+    this.holder.addEventListener(
+      'error',
+      (e) => {
+        if (e.target.tagName !== 'IMG' || !this.book) return
+        const drawn = document.createElement('template')
+        drawn.innerHTML = frontHTML({ ...this.book, cover: null })
+        e.target.replaceWith(drawn.content)
+      },
+      true,
+    )
     this.stage.addEventListener('dblclick', () => this.flip())
     window.addEventListener('popstate', () => this.syncToUrl())
     window.addEventListener('hashchange', () => this.syncToUrl())

@@ -11,6 +11,7 @@ The shared library of our weekend book club: every book members are happy to len
   - link-preview images (`/og/book/<id>.jpg`);
   - the feeds: `llms.txt`, `llms-full.txt`, `library.json`, `sitemap.xml`, and `meetups.ics` for calendar apps.
 - Pages are cached at Vercel's edge for a minute, so a change to the library shows up within a minute or so.
+- **It works offline, and installs as an app.** A service worker ([`public/sw.js`](public/sw.js)) keeps the last copy of each page and the covers it has shown, so the shelves open without a connection. With [`public/manifest.webmanifest`](public/manifest.webmanifest) and the icons in `public/icons/` (drawn by `node scripts/icons.mjs`), phones can add it to the home screen.
 
 A brand-new database starts with the shelves and calendar in [`src/data/`](src/data). Those books are placeholders, so every shelf is marked as a **sample** until its owner adds real books.
 

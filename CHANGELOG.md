@@ -4,6 +4,11 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Install it, and browse offline
+
+- The site **installs as an app**: **Add to Home Screen** on an iPhone, **Install app** on Android, or **Install** in Chrome or Edge on a computer. It gets its own icon, and opens without the browser's address bar.
+- **The shelves work offline.** Each device keeps the last copy of the pages it has opened. Without a connection, the shelves, books and calendar still open, as they were the last time you looked. Asking for a book or adding one still needs a connection.
+
 ### Faster and easier on a phone
 
 - The first screen loads faster on phones, and nothing on it jumps while it loads:

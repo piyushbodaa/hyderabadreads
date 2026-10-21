@@ -29,6 +29,7 @@ export const MAX_SPINE_HEIGHT = 214
 export const books = []
 export const readerList = []
 export const meetups = []
+export const photos = []
 export const club = {}
 export const stats = { books: 0, readers: 0, genres: 0, pages: 0, samples: 0 }
 
@@ -49,6 +50,7 @@ export function loadLibrary(data) {
       .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })),
   )
   meetups.splice(0, meetups.length, ...data.meetups)
+  photos.splice(0, photos.length, ...(data.photos ?? []))
   Object.assign(club, data.club)
   Object.assign(stats, {
     books: books.length,

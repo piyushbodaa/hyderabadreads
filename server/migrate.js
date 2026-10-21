@@ -122,6 +122,23 @@ export const MIGRATIONS = [
       `CREATE INDEX IF NOT EXISTS loans_borrower ON loans (borrower_id)`,
     ],
   },
+  {
+    id: 4,
+    name: 'photos',
+    statements: [
+      // Meetup photos for newcomers, uploaded by admins: a large copy and a thumbnail.
+      `CREATE TABLE IF NOT EXISTS photos (
+        id serial PRIMARY KEY,
+        image text NOT NULL,
+        thumb text NOT NULL,
+        width int,
+        height int,
+        caption text NOT NULL DEFAULT '',
+        created_at timestamptz NOT NULL DEFAULT now(),
+        removed_at timestamptz
+      )`,
+    ],
+  },
 ]
 
 export async function migrate(db, { seed = true } = {}) {

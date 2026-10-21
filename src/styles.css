@@ -1769,6 +1769,31 @@ textarea.input {
   }
 }
 
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.photo-grid__item {
+  margin: 0;
+}
+
+.photo-grid__item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.photo-grid__item figcaption {
+  margin: 6px 0 2px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
 /* Admin: people */
 .people {
   display: grid;
@@ -3022,6 +3047,154 @@ textarea.input {
   100% {
     box-shadow: 0 0 0 0 rgb(127 212 154 / 0);
   }
+}
+
+/* ─── First meetup (newcomers) ───────────────────────────────────────────── */
+
+.first {
+  padding: 24px var(--gutter) 56px;
+}
+
+.first__body {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 44px);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background:
+    radial-gradient(ellipse 50% 70% at 100% 0%, rgb(120 200 140 / 0.06), transparent 70%),
+    var(--surface);
+}
+
+.first__body .first__steps {
+  margin: 0 0 26px;
+}
+
+.first__next {
+  color: var(--text-2);
+  line-height: 1.65;
+}
+
+.first__next strong {
+  color: var(--text);
+}
+
+.first__photos {
+  display: flex;
+  gap: 10px;
+  margin: 26px calc(clamp(24px, 4vw, 44px) * -1) 0;
+  padding: 0 clamp(24px, 4vw, 44px) 6px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.first__photos::-webkit-scrollbar {
+  display: none;
+}
+
+.first__photo {
+  flex: none;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface-2);
+  cursor: zoom-in;
+  scroll-snap-align: start;
+}
+
+.first__photo img {
+  display: block;
+  width: auto;
+  height: 200px;
+  transition: transform 0.5s var(--ease-out);
+}
+
+.first__photo:hover img {
+  transform: scale(1.04);
+}
+
+.faq {
+  max-width: 760px;
+  margin-top: 34px;
+}
+
+.faq__title {
+  margin-bottom: 10px;
+  font: 450 21px/1.2 var(--serif);
+}
+
+.faq__item {
+  border-bottom: 1px solid var(--line);
+}
+
+.faq__item summary {
+  position: relative;
+  padding: 14px 32px 14px 0;
+  color: var(--text);
+  font-size: 15.5px;
+  font-weight: 550;
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq__item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq__item summary::after {
+  content: '+';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  color: var(--amber);
+  font: 300 22px/1 var(--sans);
+  transform: translateY(-50%);
+  transition: transform 0.25s var(--ease-out);
+}
+
+.faq__item[open] summary::after {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.faq__item p {
+  max-width: 62ch;
+  padding: 0 0 16px;
+  color: var(--text-2);
+  line-height: 1.65;
+}
+
+.photo {
+  max-width: min(92vw, 1100px);
+  max-height: 92vh;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+}
+
+.photo::backdrop {
+  background: rgb(10 8 6 / 0.88);
+}
+
+.photo img {
+  display: block;
+  max-width: 100%;
+  max-height: 84vh;
+  border-radius: 12px;
+}
+
+.photo__caption {
+  margin-top: 10px;
+  color: var(--text-2);
+  text-align: center;
+}
+
+.photo .viewer__close {
+  top: -14px;
+  right: -14px;
 }
 
 /* ─── Readers ─────────────────────────────────────────────────────────────── */

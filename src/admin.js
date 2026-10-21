@@ -34,7 +34,7 @@ async function start() {
         <a href="/digest">This week’s digest</a> is ready to post too.
       </p>
       <nav class="jump" aria-label="Admin sections">
-        <a href="#members">Members</a><a href="#calendar">Calendar</a><a href="#venues">Venues</a><a href="#club">Club details</a>
+        <a href="#members">Members</a><a href="#calendar">Calendar</a><a href="#venues">Venues</a><a href="#club">Club details</a><a href="#photos">Photos</a>
       </nav>
     </div>
     <section class="panel" id="members" aria-labelledby="new-title">
@@ -101,6 +101,18 @@ async function start() {
         </div>
         <button class="btn btn--primary" type="submit">Save</button>
       </form>
+    </section>
+    <section class="panel" id="photos" aria-labelledby="photos-title">
+      <h2 id="photos-title" class="panel__title">Meetup photos</h2>
+      <p class="panel__lede">Shown to newcomers in “Your first meetup”, newest first (the latest 12). Only share photos that everyone in them is happy to have online.</p>
+      <form class="addform" data-add-photos>
+        <div class="addform__row">
+          <label class="field"><span>Photos</span><input class="input" type="file" name="files" accept="image/jpeg,image/png,image/webp" multiple required /></label>
+          <label class="field"><span>Caption <small>optional</small></span><input class="input" name="caption" maxlength="140" placeholder="Reading at Chilaka, October" /></label>
+        </div>
+        <button class="btn btn--primary" type="submit">Upload</button>
+      </form>
+      <div class="photo-grid" data-photos></div>
     </section>`
   wire()
   wireCalendar()
@@ -270,6 +282,32 @@ function renderCalendar() {
 
   const form = desk.querySelector('[data-settings]')
   for (const [key, value] of Object.entries(settings)) if (form.elements[key]) form.elements[key].value = value
+
+  desk.querySelector('[data-photos]').innerHTML = (calendar.photos ?? [])
+    .map(
+      (p) => `
+      <figure class="photo-grid__item" data-photo-id="${p.id}">
+        <img src="${escape(p.thumb)}" alt="" loading="lazy" />
+        <figcaption>${escape(p.caption || 'No caption')}</figcaption>
+        <button type="button" class="linkish linkish--danger" data-remove-photo>Remove</button>
+      </figure>`,
+    )
+    .join('')
+}
+
+// Phone photos are big: each is shrunk to 1600px in the browser before upload.
+async function shrink(file) {
+  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height))
+  const canvas = Object.assign(document.createElement('canvas'), { width: Math.round(bitmap.width * scale), height: Math.round(bitmap.height * scale) })
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.86))
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
 }
 
 function renderPicked() {
@@ -304,6 +342,16 @@ function wireCalendar() {
         if (days.includes(new Date(y, m - 1, d).getDay())) picked.add(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
       }
       return renderPicked()
+    }
+    if (t.matches('[data-remove-photo]')) {
+      try {
+        await api('/api/admin', { method: 'POST', body: { action: 'remove-photo', id: Number(t.closest('[data-photo-id]').dataset.photoId) } })
+        toast('Photo removed.')
+        await load()
+      } catch (err) {
+        toast(err.message)
+      }
+      return
     }
     const row = t.closest('[data-meetup]')
     if (!row) return
@@ -342,6 +390,22 @@ function wireCalendar() {
         e.preventDefault()
         await api('/api/admin', { method: 'POST', body: { action: 'update-venue', id: Number(form.closest('[data-venue]').dataset.venue), ...fields } })
         toast('Venue saved.')
+      } else if (form.matches('[data-add-photos]')) {
+        e.preventDefault()
+        const files = [...form.elements.files.files]
+        const button = form.querySelector('[type=submit]')
+        button.disabled = true
+        try {
+          for (const [i, file] of files.entries()) {
+            button.textContent = `Uploading ${i + 1} of ${files.length}…`
+            await api('/api/admin', { method: 'POST', body: { action: 'add-photo', image: await shrink(file), caption: fields.caption } })
+          }
+          toast(files.length === 1 ? 'Photo added.' : `${files.length} photos added.`)
+          form.reset()
+        } finally {
+          button.disabled = false
+          button.textContent = 'Upload'
+        }
       } else if (form.matches('[data-settings]')) {
         e.preventDefault()
         await api('/api/admin', { method: 'POST', body: { action: 'set-settings', settings: fields } })

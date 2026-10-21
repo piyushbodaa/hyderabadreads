@@ -4,6 +4,14 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### A welcome for newcomers
+
+- A new **Your first meetup** section covers what to expect: bring any book, read and then chat, and just show up (no sign-up, a small fee). It ends with the next date and directions.
+- **Questions people ask:** sign-up, what happens, what to bring, the cost, where meetups are, borrowing, and adding your own books. Search engines see them as FAQ data too.
+- **Meetup photos:** admins upload them at /admin, and newcomers see the latest twelve, with a full-size view. Phone photos are shrunk before upload.
+- The fee newcomers see comes from the club details on /admin, so it can say "₹100" once that's filled in.
+- The line under the hero ends with **New here?** for anyone who isn't signed in.
+
 ### Meetups: in your calendar, and run from the site
 
 - The hero shows the next meetup ("Next meetup · Sat 24 Oct · Chilaka, Jubilee Hills · 1 to 4 PM"). On the day, it's a green **Today** banner with directions.

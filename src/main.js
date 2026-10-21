@@ -5,7 +5,7 @@ import '@fontsource-variable/cormorant-garamond'
 import '@fontsource/bebas-neue'
 import './styles.css'
 
-import { books, readerList, stats, meetups, club, hash, random, readPageData, loadLibrary } from './lib/model.js'
+import { books, readerList, stats, meetups, photos, club, hash, random, readPageData, loadLibrary } from './lib/model.js'
 import { Bookcase } from './lib/bookcase.js'
 import { Viewer } from './lib/viewer.js'
 import { startDust } from './lib/dust.js'
@@ -14,6 +14,7 @@ import { looksSignedIn } from './lib/api.js'
 import { loadSession, onSession, nextMeetup } from './lib/session.js'
 import { mapsLink, googleEventLink, icsLink, subscribeLinks } from './lib/calendar-links.js'
 import { track } from './lib/track.js'
+import { faq } from './lib/faq.js'
 
 // Signed-in members get straight to their own shelf from the header.
 if (looksSignedIn()) {
@@ -314,10 +315,62 @@ document.addEventListener('click', (e) => e.target.closest('[data-calendar-add]'
     const when = new Date(`${next.date}T00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
     line.innerHTML = isToday
       ? `<span class="hero__pulse" aria-hidden="true"></span><strong>Today</strong>, ${escape(next.time)} at <strong>${escape(next.venue)}</strong>${next.area ? `, ${escape(next.area)}` : ''} · <a href="${mapsLink(next)}" target="_blank" rel="noopener">Directions</a>`
-      : `Next meetup · <strong>${when}</strong> · ${escape(next.venue)}${next.area ? `, ${escape(next.area)}` : ''} · ${escape(next.time)} · <a href="#calendar">Calendar</a>`
+      : `Next meetup · <strong>${when}</strong> · ${escape(next.venue)}${next.area ? `, ${escape(next.area)}` : ''} · ${escape(next.time)} · <a href="#calendar">Calendar</a>${looksSignedIn() ? '' : ' · <a href="#first-meetup">New here?</a>'}`
     line.classList.toggle('is-today', isToday)
     line.hidden = false
   }
+}
+
+// For newcomers: what a meetup is like, the next one, photos, and questions.
+{
+  const next = nextMeetup()
+  const fee = club.fee?.trim()
+  const upcoming = meetups.filter((m) => m.date >= new Date().toISOString().slice(0, 10))
+  const step = (n, title, text) => `<li><span class="steps__n">${n}</span><div><strong>${title}</strong> ${text}</div></li>`
+  $('[data-first]').innerHTML = `
+    <ol class="steps first__steps">
+      ${step(1, 'Bring any book.', 'Whatever you’re reading, in any language.')}
+      ${step(2, 'Read, then chat.', 'Everyone reads quietly for a while, then the group talks about what they’re reading.')}
+      ${step(3, 'Just show up.', `No sign-up needed. There’s a small fee to attend${fee ? `: ${escape(fee)}` : ''}.`)}
+    </ol>
+    ${
+      next
+        ? `<p class="first__next">The next one is <strong>${new Date(`${next.date}T00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>,
+           ${escape(next.time)} at ${escape(next.venue)}${next.area ? `, ${escape(next.area)}` : ''}.
+           <a href="${mapsLink(next)}" target="_blank" rel="noopener">Directions</a> · <a href="#calendar">All dates</a></p>`
+        : `<p class="first__next">New dates go up on <a href="${INSTAGRAM}" target="_blank" rel="noopener">Instagram</a> first.</p>`
+    }
+    ${
+      photos.length
+        ? `<div class="first__photos" aria-label="Photos from meetups">${photos
+            .map(
+              (p, i) => `<button type="button" class="first__photo" data-photo-index="${i}" aria-label="${escape(p.caption || 'A photo from a meetup')}">
+                <img src="${escape(p.thumb)}" alt="" loading="lazy" decoding="async" width="${Math.round((p.w * 200) / p.h)}" height="200" />
+              </button>`,
+            )
+            .join('')}</div>`
+        : ''
+    }
+    <div class="faq">
+      <h3 class="faq__title">Questions people ask</h3>
+      ${faq({ club, meetups: upcoming })
+        .map(({ q, a }) => `<details class="faq__item"><summary>${escape(q)}</summary><p>${escape(a)}</p></details>`)
+        .join('')}
+    </div>`
+
+  const dialog = $('[data-photo]')
+  $('[data-first]').addEventListener('click', (e) => {
+    const button = e.target.closest('[data-photo-index]')
+    if (!button) return
+    const p = photos[Number(button.dataset.photoIndex)]
+    $('[data-photo-img]').src = p.image
+    $('[data-photo-img]').alt = p.caption || 'A photo from a meetup'
+    $('[data-photo-caption]').textContent = p.caption
+    dialog.showModal()
+  })
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog || e.target.closest('[data-photo-close]')) dialog.close()
+  })
 }
 
 // Surprise me: scroll a random book into view, then take it off the shelf.

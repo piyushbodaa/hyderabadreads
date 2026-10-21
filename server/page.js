@@ -5,6 +5,7 @@
 // without JavaScript.
 import { esc, jsonForScript } from './html.js'
 import { SITE, NAME, ABOUT, GITHUB, MEETUP_FORMAT, todayInIndia, meetupClock } from './site.js'
+import { faq } from '../src/lib/faq.js'
 
 const DEFAULT = {
   title: `${NAME} · Our shared library`,
@@ -27,7 +28,7 @@ export function renderPage({ template, notFound, data, route, origin = SITE, tod
   if ((route.kind === 'book' && !book) || (route.kind === 'shelf' && !member)) return { status: 404, html: notFound }
 
   const page = book ? bookPage(book) : member ? shelfPage(member, data) : homePage()
-  const ld = structuredData(data, today, book, origin)
+  const ld = structuredData(data, today, book, origin, route.kind === 'home')
   const html = template
     .replace(/<!--hr:meta-->[\s\S]*?<!--\/hr:meta-->/, metaTags(page, origin))
     .replace('</head>', `<script type="application/ld+json">${jsonForScript(ld)}</script>\n  </head>`)
@@ -95,7 +96,7 @@ function metaTags(page, origin) {
 }
 
 // schema.org: the club, the site, upcoming meetups as Events, and the book on a book page.
-function structuredData(data, today, book, origin) {
+function structuredData(data, today, book, origin, home) {
   const club = { '@id': `${SITE}/#club` }
   const graph = [
     {
@@ -128,6 +129,17 @@ function structuredData(data, today, book, origin) {
       },
       organizer: club,
       url: `${SITE}/#calendar`,
+    })
+  }
+  // The newcomers' questions, as they appear on the home page.
+  if (home) {
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: faq({ club: data.club, meetups: data.meetups.filter((m) => m.date >= today) }).map(({ q, a }) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a },
+      })),
     })
   }
   if (book) {

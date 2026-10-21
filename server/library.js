@@ -1,9 +1,10 @@
 // Everything a visitor can see, in one round trip to the database: members,
 // books, this month's calendar onwards and the club's settings. Nothing
 // private goes in here: a book shows as on loan, but not who has it.
+import { PHOTOS_QUERY } from './photos.js'
 
 export async function loadLibrary(db) {
-  const [members, books, meetups, settings] = await db.batch([
+  const [members, books, meetups, settings, photos] = await db.batch([
     [`SELECT name, slug FROM members WHERE removed_at IS NULL ORDER BY lower(name)`],
     [
       `SELECT b.slug AS id, b.title, b.author, b.genre, b.language, b.blurb, b.note, b.isbn, b.year, b.pages,
@@ -22,8 +23,9 @@ export async function loadLibrary(db) {
        ORDER BY mt.date, v.name`,
     ],
     [`SELECT key, value FROM settings`],
+    [PHOTOS_QUERY],
   ])
   const club = Object.fromEntries(settings.map((s) => [s.key, s.value]))
   for (const m of meetups) m.time ??= club.default_time ?? ''
-  return { members, books, meetups, club }
+  return { members, books, meetups, club, photos: photos.map(({ id, ...p }) => p) }
 }

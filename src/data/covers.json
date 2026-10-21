@@ -10,6 +10,17 @@
     "color": "#020202",
     "accent": "#56472b"
   },
+  "a-fine-balance-mistry": {
+    "isbn": null,
+    "olKey": "/works/OL2980902W",
+    "year": 1995,
+    "pages": 719,
+    "cover": "covers/a-fine-balance-mistry.webp",
+    "width": 333,
+    "height": 500,
+    "color": "#010202",
+    "accent": "#4a75a7"
+  },
   "a-suitable-boy-seth": {
     "isbn": null,
     "olKey": "/works/OL11930W",
@@ -76,6 +87,17 @@
     "color": "#fcf7f4",
     "accent": "#64b6b8"
   },
+  "big-little-lies-moriarty": {
+    "isbn": null,
+    "olKey": "/works/OL17116911W",
+    "year": 2014,
+    "pages": 512,
+    "cover": "covers/big-little-lies-moriarty.webp",
+    "width": 326,
+    "height": 500,
+    "color": "#66777a",
+    "accent": "#071a37"
+  },
   "born-a-crime-noah": {
     "isbn": null,
     "olKey": "/works/OL17824318W",
@@ -97,6 +119,17 @@
     "height": 500,
     "color": "#dc8838",
     "accent": "#372417"
+  },
+  "cosmos-sagan": {
+    "isbn": null,
+    "olKey": "/works/OL15829966W",
+    "year": 1980,
+    "pages": 354,
+    "cover": "covers/cosmos-sagan.webp",
+    "width": 394,
+    "height": 500,
+    "color": "#372519",
+    "accent": "#17130e"
   },
   "crime-and-punishment-dostoevsky": {
     "isbn": null,
@@ -152,6 +185,17 @@
     "height": 500,
     "color": "#63c9d2",
     "accent": "#694633"
+  },
+  "enders-game-card": {
+    "isbn": null,
+    "olKey": "/works/OL49488W",
+    "year": 1985,
+    "pages": 330,
+    "cover": "covers/enders-game-card.webp",
+    "width": 321,
+    "height": 500,
+    "color": "#151417",
+    "accent": "#371716"
   },
   "foundation-asimov": {
     "isbn": null,
@@ -350,6 +394,17 @@
     "height": 400,
     "color": "#fdfdfd",
     "accent": "#262725"
+  },
+  "outliers-gladwell": {
+    "isbn": null,
+    "olKey": "/works/OL5749847W",
+    "year": 2008,
+    "pages": 320,
+    "cover": "covers/outliers-gladwell.webp",
+    "width": 375,
+    "height": 500,
+    "color": "#fdfdfd",
+    "accent": "#d8d8d8"
   },
   "persepolis-satrapi": {
     "isbn": null,
@@ -604,6 +659,17 @@
     "color": "#080909",
     "accent": "#997946"
   },
+  "the-hard-thing-about-hard-things-horowitz": {
+    "isbn": null,
+    "olKey": "/works/OL16818208W",
+    "year": 2014,
+    "pages": 145,
+    "cover": "covers/the-hard-thing-about-hard-things-horowitz.webp",
+    "width": 301,
+    "height": 500,
+    "color": "#171818",
+    "accent": "#fb4801"
+  },
   "the-hitchhikers-guide-to-the-galaxy-adams": {
     "isbn": null,
     "olKey": "/works/OL2163649W",
@@ -647,6 +713,17 @@
     "height": 500,
     "color": "#ac9488",
     "accent": "#594b44"
+  },
+  "the-hungry-tide-ghosh": {
+    "isbn": "9780618329977",
+    "olKey": "/works/OL1054099W",
+    "year": 2004,
+    "pages": 377,
+    "cover": "covers/the-hungry-tide-ghosh.webp",
+    "width": 324,
+    "height": 494,
+    "color": "#040405",
+    "accent": "#56b3ba"
   },
   "the-immortals-of-meluha-tripathi": {
     "isbn": "9789380658742",
@@ -747,6 +824,17 @@
     "color": "#0c090d",
     "accent": "#a87803"
   },
+  "the-old-man-and-the-sea-hemingway": {
+    "isbn": null,
+    "olKey": "/works/OL63073W",
+    "year": 1952,
+    "pages": 131,
+    "cover": "covers/the-old-man-and-the-sea-hemingway.webp",
+    "width": 317,
+    "height": 475,
+    "color": "#92b7cb",
+    "accent": "#b7c7c7"
+  },
   "the-palace-of-illusions-divakaruni": {
     "isbn": "9780330458535",
     "olKey": "/works/OL20668662W",
@@ -757,6 +845,17 @@
     "height": 500,
     "color": "#557738",
     "accent": "#293927"
+  },
+  "the-power-of-now-tolle": {
+    "isbn": null,
+    "olKey": "/works/OL5727686W",
+    "year": 1997,
+    "pages": 224,
+    "cover": "covers/the-power-of-now-tolle.webp",
+    "width": 323,
+    "height": 500,
+    "color": "#88c4c3",
+    "accent": "#85a79b"
   },
   "the-prophet-gibran": {
     "isbn": null,
@@ -823,6 +922,17 @@
     "height": 475,
     "color": "#03361a",
     "accent": "#05763c"
+  },
+  "the-shining-king": {
+    "isbn": null,
+    "olKey": "/works/OL81633W",
+    "year": 1977,
+    "pages": 506,
+    "cover": "covers/the-shining-king.webp",
+    "width": 311,
+    "height": 500,
+    "color": "#0c0c0b",
+    "accent": "#b84824"
   },
   "the-silent-patient-michaelides": {
     "isbn": null,

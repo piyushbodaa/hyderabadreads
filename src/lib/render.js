@@ -23,7 +23,7 @@ export function bookVars(book) {
 
 export function spineHTML(book) {
   const author = book.style === 'minimal' ? '' : `<span class="spine__author">${escape(book.surname)}</span>`
-  const loan = book.onLoanTo ? '<span class="spine__loan" aria-hidden="true"></span>' : ''
+  const loan = book.onLoan || book.onLoanTo ? '<span class="spine__loan" aria-hidden="true"></span>' : ''
   return `
     <span class="spine__title"><span>${escape(spineText(book.title))}</span></span>
     ${author}

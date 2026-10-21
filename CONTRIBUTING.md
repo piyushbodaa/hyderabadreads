@@ -46,6 +46,9 @@ The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with n
 | `server/openlibrary.js` | Book search, covers and spine colours from Open Library |
 | `src/me.js`, `src/admin.js` | The My shelf and admin pages |
 | `src/lib/scan.js` | Barcode scanning with the phone camera |
+| `server/loans.js` | Requests, loans, returns, and the weekly digest's data |
+| `src/lib/session.js` | Who's signed in on the home page, and the lending they see |
+| `src/bookplates.js`, `src/digest.js` | Printable QR bookplates, and the weekly WhatsApp digest |
 
 ## Licence
 

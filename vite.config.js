@@ -16,6 +16,8 @@ export default defineConfig({
         notFound: page('404.html'),
         me: page('me.html'),
         admin: page('admin.html'),
+        bookplates: page('bookplates.html'),
+        digest: page('digest.html'),
       },
     },
   },

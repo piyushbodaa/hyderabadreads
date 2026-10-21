@@ -89,6 +89,7 @@ function bookFrom(raw, index) {
     language: raw.language || 'English',
     blurb: raw.blurb ?? '',
     note: raw.note ?? '',
+    onLoan: Boolean(raw.onLoan),
     onLoanTo: raw.onLoanTo ?? null,
     owner: raw.owner,
     sample: Boolean(raw.sample),

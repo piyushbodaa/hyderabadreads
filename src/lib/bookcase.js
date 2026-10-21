@@ -17,6 +17,12 @@ const LABEL_FONT = '600 10px "Inter Variable", system-ui, sans-serif'
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
 
+function spineLabel(book) {
+  const shelf = book.sample ? `a sample book on ${book.owner}’s shelf` : `from ${book.owner}’s shelf`
+  const loan = book.onLoanTo ? `, on loan to ${book.onLoanTo}` : book.onLoan ? ', on loan' : ''
+  return `${book.title} by ${book.author}, ${shelf}${loan}`
+}
+
 export class Bookcase {
   constructor(root, { tip, onOpen, onLayout }) {
     this.root = root
@@ -46,10 +52,7 @@ export class Bookcase {
       spine.className = `spine spine--${book.style} font-${book.font}`
       spine.style.cssText = bookVars(book)
       spine.dataset.id = book.id
-      spine.setAttribute(
-        'aria-label',
-        `${book.title} by ${book.author}, ${book.sample ? `a sample book on ${book.owner}’s shelf` : `from ${book.owner}’s shelf`}${book.onLoanTo ? `, on loan to ${book.onLoanTo}` : ''}`,
-      )
+      spine.setAttribute('aria-label', spineLabel(book))
       spine.innerHTML = spineHTML(book)
       wrap.append(spine)
       frag.append(wrap)
@@ -95,6 +98,14 @@ export class Bookcase {
       })
     this.layout()
     requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('is-static')))
+  }
+
+  // Redraws spines after loans change (who has what arrives after the page).
+  refresh() {
+    for (const { book, spine } of this.els.values()) {
+      spine.innerHTML = spineHTML(book)
+      spine.setAttribute('aria-label', spineLabel(book))
+    }
   }
 
   setArrange(mode) {

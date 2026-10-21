@@ -50,6 +50,8 @@
     { "source": "/media/:file", "destination": "/api/app?route=media&file=:file" },
     { "source": "/me", "destination": "/me.html" },
     { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/bookplates", "destination": "/bookplates.html" },
+    { "source": "/digest", "destination": "/digest.html" },
     { "source": "/api/:route", "destination": "/api/app?route=:route" }
   ],
   "redirects": [

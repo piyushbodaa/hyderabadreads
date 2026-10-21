@@ -15,17 +15,26 @@
 - strips query strings and `#fragments` from the page address and referrer, and sends a fixed page title;
 - keeps member names out of addresses: every `/shelf/<name>` is sent as `/shelf/`, and a second copy of a book (`/book/dune-herbert--piyush`) as the book itself (`/book/dune-herbert`);
 - sets Google Signals and ad-personalisation signals to off in the tag;
-- sends no User-ID, member details or custom events.
+- sends no User-ID or member details.
 
 GA4 still uses its usual cookies and device identifiers, so this isn't anonymous or cookieless analytics. The footer tells visitors so.
 
 ## What it counts
 
 - Page loads, by address. Books have their own addresses (`/book/<id>`), so a book link opened from the club group counts as a visit to that book.
+- Three events for borrowing, the thing the site is for, sent through `src/lib/track.js` with no parameters: no names, owners or titles.
+
+| Event | When |
+| --- | --- |
+| `ask_click` | Someone copies or shares an "Ask to bring it" message |
+| `borrow_request` | A signed-in member asks for a book |
+| `borrow_got` | A member marks a book as borrowed ("I've got it", often from a bookplate's QR code) |
+
+The number to watch is `borrow_request` per week: whether the library is being used, not just looked at.
 
 ## What it doesn't count
 
-- Books opened from the shelves without reloading the page. Those could be added later as a custom event, deliberately without member names.
+- Books opened from the shelves without reloading the page.
 - UTM campaign tags, because query strings are stripped.
 
 ## Settings in Google Analytics itself

@@ -5,12 +5,15 @@ import '@fontsource-variable/cormorant-garamond'
 import '@fontsource/bebas-neue'
 import './styles.css'
 
-import { books, readerList, stats, hash, random } from './lib/model.js'
+import { books, readerList, stats, meetups, club, hash, random, readPageData, loadLibrary } from './lib/model.js'
 import { Bookcase } from './lib/bookcase.js'
 import { Viewer } from './lib/viewer.js'
 import { startDust } from './lib/dust.js'
 import { escape } from './lib/render.js'
-import { meetups, VENUES, TIME, INSTAGRAM } from './data/meetups.js'
+
+// The server writes the whole library into the page; everything below draws it.
+loadLibrary(readPageData())
+const INSTAGRAM = club.instagram || 'https://www.instagram.com/hyderabadreads'
 
 const $ = (sel) => document.querySelector(sel)
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
@@ -159,15 +162,20 @@ renderChips()
 $('[data-readers]').innerHTML = readerList
   .map((r) => {
     const genres = [...new Set(r.books.map((b) => b.genre))]
+    const sample = r.books.length > 0 && r.books.every((b) => b.sample)
     const shelf = r.books
       .map((b) => `<i style="--base:${b.base};--accent:${b.accent};height:${(b.h * 0.3).toFixed(1)}px;width:${(b.t * 0.3).toFixed(1)}px"></i>`)
       .join('')
+    const count = r.books.length === 1 ? '1 book' : `${r.books.length} books`
+    const meta = r.books.length
+      ? `${sample ? `${count}, all samples` : count} · ${escape(genres.slice(0, 2).join(', '))}${genres.length > 2 ? ` +${genres.length - 2}` : ''}`
+      : 'No books yet'
     return `
       <li>
-        <button type="button" class="reader" data-reader="${escape(r.name)}" style="--hue:${r.hue}">
+        <button type="button" class="reader${sample ? ' is-sample' : ''}" data-reader="${escape(r.name)}" style="--hue:${r.hue}"${r.books.length ? '' : ' disabled'}>
           <span class="avatar">${escape(r.name[0])}</span>
           <span class="reader__name">${escape(r.name)}</span>
-          <span class="reader__meta">${r.books.length} books · ${escape(genres.slice(0, 2).join(', '))}${genres.length > 2 ? ` +${genres.length - 2}` : ''}</span>
+          <span class="reader__meta">${meta}</span>
           <span class="reader__shelf" aria-hidden="true">${shelf}</span>
         </button>
       </li>`
@@ -187,11 +195,9 @@ function renderMeetups() {
   const now = new Date()
   const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
   const dateOf = (iso) => new Date(`${iso}T00:00`)
-  const all = meetups
-    .map((m) => ({ ...m, area: VENUES[m.venue]?.area ?? '', time: m.time ?? VENUES[m.venue]?.time ?? TIME }))
-    .sort((a, b) => a.date.localeCompare(b.date))
+  const all = [...meetups].sort((a, b) => a.date.localeCompare(b.date))
   if (!all.length) return ''
-  const next = all.find((m) => m.date >= today)
+  const next = all.find((m) => m.date >= today && !m.cancelled)
   const maps = (m) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${m.venue}, ${m.area}, Hyderabad`)}`
 
   const card = next
@@ -226,7 +232,11 @@ function renderMeetups() {
         <span class="cal__n">${d}</span>
         ${list.length ? `<span class="cal__when">${when}</span>` : ''}
         ${list
-          .map((m) => `<a class="cal__venue" href="${maps(m)}" target="_blank" rel="noopener">${escape(m.venue)}</a><span class="cal__area">${escape(m.area)}</span><span class="cal__time">${escape(m.time)}</span>`)
+          .map((m) =>
+            m.cancelled
+              ? `<s class="cal__venue">${escape(m.venue)}</s><span class="cal__time">Cancelled</span>`
+              : `<a class="cal__venue" href="${maps(m)}" target="_blank" rel="noopener">${escape(m.venue)}</a><span class="cal__area">${escape(m.area)}</span><span class="cal__time">${escape(m.time)}</span>`,
+          )
           .join('')}
       </div>`)
   }
@@ -286,7 +296,9 @@ const HERO_SLOTS = [
 const heroBooks = $('[data-hero-books]')
 {
   const rand = random(hash(new Date().toISOString().slice(0, 10)))
-  const pool = books.filter((b) => b.cover).sort(() => rand() - 0.5)
+  // Real books first; placeholders only fill in while shelves are still samples.
+  const real = books.filter((b) => b.cover && !b.sample)
+  const pool = (real.length >= HERO_SLOTS.length ? real : books.filter((b) => b.cover)).sort(() => rand() - 0.5)
   const picks = []
   for (const b of pool) if (picks.length < HERO_SLOTS.length && !picks.some((p) => p.owner === b.owner)) picks.push(b)
   heroBooks.innerHTML = picks
@@ -321,6 +333,15 @@ const statItems = [
 statsEl.innerHTML = statItems
   .map(([label, value]) => `<div><dt>${label}</dt><dd data-to="${value}">${reduceMotion.matches ? value.toLocaleString('en-IN') : 0}</dd></div>`)
   .join('')
+if (stats.samples) {
+  const note = document.createElement('p')
+  note.className = 'stats__note'
+  note.textContent =
+    stats.samples === stats.books
+      ? 'Every shelf is a sample for now: placeholder books until members add their own.'
+      : `${stats.samples} of these are sample books, standing in until their owners add real ones.`
+  statsEl.after(note)
+}
 if (!reduceMotion.matches) {
   const start = performance.now() + 250
   const run = (now) => {
@@ -350,4 +371,12 @@ $('[data-bookcase]').addEventListener('pointerover', (e) => {
 })
 
 startDust($('[data-dust]'))
-viewer.syncToHash()
+
+// A member's shelf (/shelf/piyush) opens on the library, showing just their books.
+const shelfSlug = location.pathname.match(/^\/shelf\/([^/]+)\/?$/)?.[1]
+const shelfOwner = shelfSlug && readerList.find((r) => r.slug === shelfSlug)
+if (shelfOwner) {
+  selectFacet(shelfOwner.name)
+  requestAnimationFrame(() => $('#library').scrollIntoView({ behavior: 'auto' }))
+}
+viewer.syncToUrl()

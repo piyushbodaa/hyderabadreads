@@ -12,15 +12,20 @@
 
 - runs only on `hyderabadreads.fun` and `www.hyderabadreads.fun`, never on localhost, Vercel previews or lookalike hosts;
 - can't initialise twice;
-- strips query strings and `#fragments` from the page address and referrer, so book links (`#book/…`) and anything else in a URL never reach Google, and sends a fixed page title;
+- strips query strings and `#fragments` from the page address and referrer, and sends a fixed page title;
+- keeps member names out of addresses: every `/shelf/<name>` is sent as `/shelf/`, and a second copy of a book (`/book/dune-herbert--piyush`) as the book itself (`/book/dune-herbert`);
 - sets Google Signals and ad-personalisation signals to off in the tag;
 - sends no User-ID, member details or custom events.
 
 GA4 still uses its usual cookies and device identifiers, so this isn't anonymous or cookieless analytics. The footer tells visitors so.
 
+## What it counts
+
+- Page loads, by address. Books have their own addresses (`/book/<id>`), so a book link opened from the club group counts as a visit to that book.
+
 ## What it doesn't count
 
-- Which books people open. The site is a single page and `#book/` links are stripped, so every visit is one page view. Book opens could be added later as a custom event, deliberately without member names.
+- Books opened from the shelves without reloading the page. Those could be added later as a custom event, deliberately without member names.
 - UTM campaign tags, because query strings are stripped.
 
 ## Settings in Google Analytics itself

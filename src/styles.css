@@ -475,6 +475,54 @@ kbd {
   color: var(--muted);
 }
 
+.stats__note {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  animation: rise 1s 0.4s var(--ease-out) both;
+}
+
+/* Placeholder books sit a little back on the shelf until they're real. */
+.book.is-sample .spine {
+  opacity: 0.72;
+}
+
+.book.is-sample:hover .spine,
+.book.is-sample .spine:focus-visible {
+  opacity: 1;
+}
+
+.reader.is-sample .reader__shelf i {
+  opacity: 0.6;
+}
+
+.reader:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.info__shelf {
+  display: block;
+  color: var(--text);
+  font: 500 18px/1.2 var(--serif);
+  text-decoration: none;
+}
+
+.info__shelf:hover {
+  text-decoration: underline 1px;
+  text-underline-offset: 3px;
+}
+
+.info__sample {
+  margin: -6px 0 20px;
+  padding: 12px 14px;
+  border: 1px dashed rgb(226 167 91 / 0.4);
+  border-radius: 12px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 /* ─── Sections ────────────────────────────────────────────────────────────── */
 
 .section-head {
@@ -837,6 +885,17 @@ kbd {
 .plate.is-new,
 .plate.is-gone {
   opacity: 0;
+}
+
+/* A sample shelf: a paler plate with a hollow dot. */
+.plate.is-sample {
+  background: linear-gradient(#e7dcc3, #bcab88 52%, #9d8a62);
+  color: #4a3a22;
+}
+
+.plate.is-sample .plate__dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px #6b5a3a;
 }
 
 .decor {

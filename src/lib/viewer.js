@@ -7,13 +7,15 @@ import { bookVars, spineHTML, frontHTML, backHTML, escape } from './render.js'
 const PERSPECTIVE = 1800
 const REST_X = 5
 const REST_Y = 24
+const BOOK_PATH = /^\/book\/([^/]+)\/?$/
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
 
 export class Viewer {
-  constructor(el, { bookcase, toast }) {
+  constructor(el, { bookcase, toast, onChange }) {
     this.el = el
     this.bookcase = bookcase
     this.toast = toast
+    this.onChange = onChange
     this.stage = el.querySelector('[data-stage]')
     this.holder = el.querySelector('[data-book3d]')
     this.floor = el.querySelector('[data-floor]')
@@ -43,16 +45,22 @@ export class Viewer {
       this.pose.py = 0
     })
     this.stage.addEventListener('dblclick', () => this.flip())
-    window.addEventListener('popstate', () => this.syncToHash())
+    window.addEventListener('popstate', () => this.syncToUrl())
+    window.addEventListener('hashchange', () => this.syncToUrl())
+    // Where closing a book returns to: the home page, or a member's shelf.
+    this.home = BOOK_PATH.test(location.pathname) ? '/' : location.pathname + location.search
   }
 
   get isOpen() {
     return !this.el.hidden
   }
 
-  // Opens from a deep link (#book/slug) if the page was loaded with one.
-  syncToHash() {
-    const id = decodeURIComponent(location.hash.match(/^#book\/(.+)$/)?.[1] ?? '')
+  // Every book has its own address, /book/<id>. Links from before that used
+  // #book/<id>, so those are moved over to the new form first.
+  syncToUrl() {
+    const legacy = location.hash.match(/^#book\/(.+)$/)?.[1]
+    if (legacy) history.replaceState(null, '', `/book/${legacy}`)
+    const id = decodeURIComponent(location.pathname.match(BOOK_PATH)?.[1] ?? '')
     const book = this.bookcase.order.find((b) => b.id === id) ?? [...this.bookcase.els.values()].find((e) => e.book.id === id)?.book
     if (book && book !== this.book) this.open(book, null, { fromHistory: true })
     else if (!id && this.isOpen) {
@@ -68,9 +76,10 @@ export class Viewer {
     this.book = book
     this.returnFocus = document.activeElement
     if (!fromHistory) {
-      history.pushState({ book: book.id }, '', `#book/${book.id}`)
+      history.pushState({ book: book.id }, '', `/book/${book.id}`)
       this.pushed = true
     }
+    this.onChange?.(book)
 
     document.documentElement.classList.add('is-locked')
     this.el.hidden = false
@@ -110,7 +119,7 @@ export class Viewer {
         easing: 'cubic-bezier(.2,.8,.2,1)',
       }).finished.catch(() => {})
     }
-    this.el.querySelector('[data-ask]')?.focus({ preventScroll: true })
+    this.el.querySelector('[data-ask], [data-link]')?.focus({ preventScroll: true })
     this.busy = false
   }
 
@@ -122,7 +131,7 @@ export class Viewer {
       this.pushed = false
       history.back()
     } else {
-      history.replaceState(null, '', location.pathname + location.search)
+      history.replaceState(null, '', this.home)
       this.close()
     }
   }
@@ -190,11 +199,12 @@ export class Viewer {
       this.info.animate([{ opacity: 1 }, { opacity: 0, transform: `translateX(${-dir * 16}px)` }], { duration: quick, fill: 'forwards' }).finished,
     ]).catch(() => {})
     this.book = book
-    history.replaceState({ book: book.id }, '', `#book/${book.id}`)
+    history.replaceState({ book: book.id }, '', `/book/${book.id}`)
+    this.onChange?.(book)
     this.build(book)
     this.renderInfo(book)
     this.resetPose()
-    this.el.querySelector('[data-ask]')?.focus({ preventScroll: true })
+    this.el.querySelector('[data-ask], [data-link]')?.focus({ preventScroll: true })
     this.holder.getAnimations().forEach((a) => a.cancel())
     this.info.getAnimations().forEach((a) => a.cancel())
     const slow = reduceMotion.matches ? 1 : 420
@@ -266,16 +276,25 @@ export class Viewer {
       <div class="info__owner">
         <span class="avatar" style="--hue:${reader?.hue ?? 30}">${escape(book.owner[0])}</span>
         <div>
-          <span class="info__label">On the shelf of</span>
-          <strong>${escape(book.owner)}</strong>
+          <span class="info__label">${book.sample ? 'Sample on the shelf of' : 'On the shelf of'}</span>
+          <a class="info__shelf" href="/shelf/${escape(reader?.slug ?? '')}">${escape(book.owner)}</a>
         </div>
         ${book.onLoanTo ? `<span class="info__loan">With ${escape(book.onLoanTo)} right now</span>` : ''}
       </div>
+      ${
+        book.sample
+          ? `<p class="info__sample">A placeholder while ${escape(book.owner)} adds their real books, so there’s nothing to borrow here yet.</p>`
+          : ''
+      }
       <div class="info__actions">
-        <button class="btn btn--primary" type="button" data-ask>
+        ${
+          book.sample
+            ? ''
+            : `<button class="btn btn--primary" type="button" data-ask>
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.5h14v9H8l-4 3v-3H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
           ${escape(askLabel)}
-        </button>
+        </button>`
+        }
         <button class="btn btn--ghost btn--icon" type="button" data-link aria-label="Copy a link to this book" title="Copy link">
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8.5 11.5a3.5 3.5 0 005 0l2.5-2.5a3.5 3.5 0 00-5-5l-1 1M11.5 8.5a3.5 3.5 0 00-5 0L4 11a3.5 3.5 0 005 5l1-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
         </button>
@@ -285,7 +304,7 @@ export class Viewer {
   }
 
   link(book) {
-    return `${location.origin}/#book/${book.id}`
+    return `${location.origin}/book/${book.id}`
   }
 
   async ask() {

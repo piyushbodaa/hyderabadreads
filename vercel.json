@@ -3,6 +3,15 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "regions": ["sin1"],
+  "functions": {
+    "api/page.js": {
+      "includeFiles": "server/generated/*.html"
+    },
+    "api/og.js": {
+      "includeFiles": "{public/covers/**,public/logo-512.png,node_modules/@fontsource/fraunces/files/fraunces-latin-500-normal.woff,node_modules/@fontsource/inter/files/inter-latin-400-normal.woff,node_modules/@fontsource/inter/files/inter-latin-600-normal.woff}"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
@@ -25,15 +34,18 @@
     {
       "source": "/covers/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" }]
-    },
-    {
-      "source": "/llms.txt",
-      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
-    },
-    {
-      "source": "/llms-full.txt",
-      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
     }
+  ],
+  "rewrites": [
+    { "source": "/", "destination": "/api/page?route=home" },
+    { "source": "/book/:slug", "destination": "/api/page?route=book&slug=:slug" },
+    { "source": "/shelf/:slug", "destination": "/api/page?route=shelf&slug=:slug" },
+    { "source": "/og/:kind/:file", "destination": "/api/og?kind=:kind&file=:file" },
+    { "source": "/llms.txt", "destination": "/api/feeds?feed=llms" },
+    { "source": "/llms-full.txt", "destination": "/api/feeds?feed=llms-full" },
+    { "source": "/library.json", "destination": "/api/feeds?feed=json" },
+    { "source": "/sitemap.xml", "destination": "/api/feeds?feed=sitemap" },
+    { "source": "/meetups.ics", "destination": "/api/feeds?feed=ics" }
   ],
   "redirects": [
     { "source": "/", "has": [{ "type": "host", "value": "www.hyderabadreads.fun" }], "destination": "https://hyderabadreads.fun/", "permanent": true },

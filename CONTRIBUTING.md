@@ -1,30 +1,12 @@
 # Contributing to Hyderabad Reads
 
-Thanks for helping. Anyone can contribute, club member or not: books, calendar dates, bug fixes and new features are all welcome.
+Thanks for helping. Anyone can contribute, club member or not: bug fixes, new features and ideas are all welcome.
 
-## Adding your books (no coding)
+## Books and meetups
 
-1. Open [`src/data/library.js`](src/data/library.js) on GitHub and click the pencil icon. GitHub makes a copy (a fork) for you.
-2. Find your name, or copy a reader block for someone new and slot it in alphabetically.
-3. Add one line per book. Only `title` and `author` are required:
+The library and the calendar live in the site's database, not in this repository. Members manage their own shelves on the site, and the club's admins run the calendar. Until sign-in arrives, send your titles to Piyush on the club group.
 
-   ```js
-   { title: 'Dune', author: 'Frank Herbert', genre: 'Sci-Fi & Fantasy' },
-   ```
-
-4. Click **Propose changes**, then **Create pull request**. A maintainer reviews and merges it, and the site updates about a minute later, covers and all.
-
-The comment at the top of the file lists the optional fields (`genre`, `language`, `blurb`, `note`, `onLoanTo`, `isbn`, `year`).
-
-## Updating the meetup calendar
-
-Dates and venues live in [`src/data/meetups.js`](src/data/meetups.js). Each meetup is one line:
-
-```js
-{ date: '2026-11-07', venue: 'Chilaka' },
-```
-
-A new venue goes into `VENUES` first, with its area and (if different from the usual) its timings.
+[`src/data/`](src/data) only holds the starting shelves and calendar that fill a brand-new database, such as a fresh preview or your local copy.
 
 ## Changing the code
 
@@ -35,22 +17,30 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
+You don't need a database: locally the site uses PGlite (Postgres in WebAssembly) in `.data/`, filled with the starting shelves on first run.
+
 - Work on a branch and open a pull request against `main`.
-- Run `npm test` and `npm run build` before you push. The build also fetches covers for any new books.
+- Run `npm test` and `npm run build` before you push.
 - Check your change at phone width (about 390px) as well as on a laptop. Most of the club opens the site on a phone.
 - Keep pull requests small. The pull request template asks what changed and why. Fill it in so the club can follow along, and add screenshots for anything visual.
 - Add a line to [`CHANGELOG.md`](CHANGELOG.md) under today's date. If you forget, a maintainer will do it when merging.
+- Schema changes go at the end of `MIGRATIONS` in `server/migrate.js`, as new statements that are safe to run twice. Never edit a migration that has already shipped.
 
 The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with no framework. The main pieces:
 
 | File | What it does |
 | --- | --- |
-| `src/data/library.js` | Every reader and book |
-| `src/data/meetups.js` | The meetup calendar |
+| `src/main.js` | Search, filters, sections and wiring on the home page |
+| `src/lib/model.js` | Turns the library data into books with spine designs |
 | `src/lib/bookcase.js` | Shelves, grouping and the sliding layout |
 | `src/lib/viewer.js` | The 3D book that opens when you pick one |
-| `src/main.js` | Search, filters, sections and wiring |
-| `scripts/covers.mjs` | Fetches covers and spine colours from Open Library at build time |
+| `api/*.js` | Vercel Functions: pages, feeds and link-preview images |
+| `server/page.js` | Server-rendered pages: titles, link previews, structured data |
+| `server/library.js` | Everything a visitor can see, in one database round trip |
+| `server/migrate.js`, `server/seed.js` | The database schema, and the starting shelves for an empty database |
+| `server/og.js` | Link-preview images, drawn with Satori and sharp |
+| `server/feeds.js` | `llms.txt`, `llms-full.txt`, `library.json`, `sitemap.xml`, `meetups.ics` |
+| `server/dev.js` | Runs the same server inside Vite for `npm run dev` and `npm run preview` |
 
 ## Licence
 

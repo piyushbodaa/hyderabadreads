@@ -1,0 +1,23 @@
+# Hyderabad Reads welcomes search engines, AI assistants and agents.
+# A summary for language models is at https://hyderabadreads.fun/llms.txt and
+# the full catalogue and calendar at https://hyderabadreads.fun/llms-full.txt
+# (or https://hyderabadreads.fun/library.json).
+
+User-agent: *
+Allow: /
+
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Meta-ExternalAgent
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://hyderabadreads.fun/sitemap.xml

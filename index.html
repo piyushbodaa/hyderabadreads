@@ -3,18 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Hyderabad Reads · Our shared library</title>
-    <meta name="description" content="The Hyderabad Reads book club's shared bookshelf and weekend meetup calendar. Find a book you like and ask its owner to bring it to the next meetup." />
     <meta name="theme-color" content="#0f0c0a" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="canonical" href="https://hyderabadreads.fun/" />
     <!-- For AI assistants and agents: the whole site as text and data. -->
     <link rel="alternate" type="text/markdown" href="/llms.txt" title="Summary for AI assistants" />
     <link rel="alternate" type="text/markdown" href="/llms-full.txt" title="Full catalogue and calendar" />
     <link rel="alternate" type="application/json" href="/library.json" title="Catalogue as JSON" />
-    <!-- Link previews (WhatsApp, Instagram, X…). Apps cache the image by URL, so a
-         new design needs a new file name (og-v2.jpg, og-v3.jpg…) to show up. -->
+    <link rel="alternate" type="text/calendar" href="/meetups.ics" title="Meetup calendar" />
+    <!-- The server (server/page.js) replaces everything between these markers
+         with the title, description and link preview for the page being shown:
+         the home page, a book or a member's shelf. These are the home page's. -->
+    <!--hr:meta-->
+    <title>Hyderabad Reads · Our shared library</title>
+    <meta name="description" content="The Hyderabad Reads book club's shared bookshelf and weekend meetup calendar. Find a book you like and ask its owner to bring it to the next meetup." />
+    <link rel="canonical" href="https://hyderabadreads.fun/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Hyderabad Reads" />
     <meta property="og:locale" content="en_IN" />
@@ -30,6 +33,7 @@
     <meta name="twitter:title" content="Hyderabad Reads · Our shared library" />
     <meta name="twitter:description" content="Our weekend book club's shared bookshelf and meetup calendar. Find a book you like, ask its owner to bring it." />
     <meta name="twitter:image" content="https://hyderabadreads.fun/og-v2.jpg" />
+    <!--/hr:meta-->
     <!-- Google Analytics: page views on hyderabadreads.fun only. See ANALYTICS.md. -->
     <script defer src="/analytics.js"></script>
   </head>
@@ -126,12 +130,7 @@
             <div class="bookcase__tip" aria-hidden="true" data-tip></div>
           </div>
           <p class="bookcase__empty" hidden data-empty></p>
-          <noscript>
-            <p class="library__noscript">
-              The shelves need JavaScript. The whole catalogue is also on one page:
-              <a href="/llms-full.txt">llms-full.txt</a> (or <a href="/library.json">library.json</a>).
-            </p>
-          </noscript>
+          <noscript><!--hr:noscript--></noscript>
         </div>
         <p class="library__hint">
           Pick any book to take it off the shelf.
@@ -168,16 +167,13 @@
             </li>
             <li>
               <span class="steps__n">2</span>
-              <div><strong>Send the titles</strong> to Piyush on the club group, or add them yourself on GitHub.</div>
+              <div><strong>Send the titles</strong> to Piyush on the club group.</div>
             </li>
             <li>
               <span class="steps__n">3</span>
-              <div><strong>They appear here</strong> about a minute later, cover and all.</div>
+              <div><strong>They appear here</strong> on your shelf, cover and all, replacing any sample books.</div>
             </li>
           </ol>
-          <div class="join__actions">
-            <a class="btn btn--primary" href="https://github.com/piyushbodaa/hyderabadreads/edit/main/src/data/library.js" target="_blank" rel="noopener">Edit the list on GitHub</a>
-          </div>
           <h3 class="join__sub">How borrowing works</h3>
           <p class="join__text">
             Open a book and tap <em>Ask to bring it</em>. That copies a message you can paste in the group. Pick it up
@@ -234,6 +230,7 @@
 
     <div class="toast" role="status" aria-live="polite" data-toast></div>
 
+    <!--hr:data-->
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

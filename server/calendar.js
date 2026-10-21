@@ -1,8 +1,9 @@
 // The club's calendar and details, run by admins on the site: meetups, the
 // venues they rotate through, and settings like the usual time and the fee.
 import { Problem } from './members.js'
+import { addPhoto, removePhoto, PHOTOS_QUERY } from './photos.js'
 
-export const CALENDAR_ACTIONS = new Set(['add-meetups', 'update-meetup', 'delete-meetup', 'add-venue', 'update-venue', 'set-settings'])
+export const CALENDAR_ACTIONS = new Set(['add-meetups', 'update-meetup', 'delete-meetup', 'add-venue', 'update-venue', 'set-settings', 'add-photo', 'remove-photo'])
 
 // What admins can change about the club, with how each is checked.
 const SETTINGS = {
@@ -30,7 +31,7 @@ function text(value, max, label, required = false) {
 const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s ?? '') && !Number.isNaN(Date.parse(`${s}T00:00:00Z`))
 
 export async function adminCalendar(db) {
-  const [meetups, venues, settings] = await db.batch([
+  const [meetups, venues, settings, photos] = await db.batch([
     [
       `SELECT mt.id, to_char(mt.date, 'YYYY-MM-DD') AS date, v.name AS venue, mt.time, mt.note, mt.cancelled
        FROM meetups mt JOIN venues v ON v.id = mt.venue_id
@@ -39,8 +40,9 @@ export async function adminCalendar(db) {
     ],
     [`SELECT id, name, area, time FROM venues ORDER BY lower(name)`],
     [`SELECT key, value FROM settings`],
+    [PHOTOS_QUERY],
   ])
-  return { meetups, venues, settings: Object.fromEntries(settings.map((s) => [s.key, s.value])) }
+  return { meetups, venues, settings: Object.fromEntries(settings.map((s) => [s.key, s.value])), photos }
 }
 
 async function venueId(db, name) {
@@ -112,6 +114,11 @@ export async function calendarAction(db, input) {
       )
       return {}
     }
+    case 'add-photo':
+      return addPhoto(db, input)
+    case 'remove-photo':
+      await removePhoto(db, input.id)
+      return {}
     default:
       throw new Problem(400, 'Unknown action.')
   }

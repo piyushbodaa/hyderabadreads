@@ -51,6 +51,7 @@ The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with n
 | `src/bookplates.js`, `src/digest.js` | Printable QR bookplates, and the weekly WhatsApp digest |
 | `server/calendar.js` | Admins' calendar, venues and club details |
 | `src/lib/calendar-links.js`, `src/lib/meetup-time.js` | Add-to-calendar links, and meetup times as calendar times |
+| `src/lib/faq.js`, `server/photos.js` | Newcomers' questions (page and schema.org), and meetup photos |
 
 ## Licence
 

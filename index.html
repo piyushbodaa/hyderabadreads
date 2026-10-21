@@ -150,6 +150,14 @@
         <div class="meetups__body" data-meetups></div>
       </section>
 
+      <section id="first-meetup" class="first" aria-labelledby="first-title">
+        <div class="section-head">
+          <h2 id="first-title" class="section-title">Your first meetup</h2>
+          <p class="section-sub">No sign-up and no reading list. Bring a book and come along.</p>
+        </div>
+        <div class="first__body" data-first></div>
+      </section>
+
       <section id="readers" class="readers" aria-labelledby="readers-title">
         <div class="section-head">
           <h2 id="readers-title" class="section-title">Readers</h2>
@@ -231,6 +239,14 @@
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
       </button>
     </div>
+
+    <dialog class="photo" aria-label="Meetup photo" data-photo>
+      <img alt="" data-photo-img />
+      <p class="photo__caption" data-photo-caption></p>
+      <button type="button" class="viewer__close" aria-label="Close" data-photo-close>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+      </button>
+    </dialog>
 
     <div class="toast" role="status" aria-live="polite" data-toast></div>
 

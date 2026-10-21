@@ -17,6 +17,28 @@ const LABEL_FONT = '600 10px "Inter Variable", system-ui, sans-serif'
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
 
+// Two of the spine faces (Cormorant, Bebas) appear nowhere else, so they stay
+// out of the page's first download and arrive once the shelves are being built.
+// Until then the spines use the fallbacks, sized again when the fonts land.
+function loadSpineFonts() {
+  return Promise.all([import('@fontsource-variable/cormorant-garamond'), import('@fontsource/bebas-neue')]).then(() =>
+    Promise.all(SPINE_FONTS.map((f) => document.fonts.load(f))),
+  )
+}
+
+// Runs `work` over the items about 16 at a time, a frame apart.
+function inBatches(items, work, size = 16) {
+  return new Promise((resolve) => {
+    let i = 0
+    const next = () => {
+      work(items.slice(i, (i += size)))
+      if (i < items.length) requestAnimationFrame(next)
+      else resolve()
+    }
+    next()
+  })
+}
+
 function spineLabel(book) {
   const shelf = book.sample ? `a sample book on ${book.owner}’s shelf` : `from ${book.owner}’s shelf`
   const loan = book.onLoanTo ? `, on loan to ${book.onLoanTo}` : book.onLoan ? ', on loan' : ''
@@ -41,7 +63,7 @@ export class Bookcase {
     this.decor = []
     this.measure = document.createElement('canvas').getContext('2d')
 
-    const frag = document.createDocumentFragment()
+    const wraps = []
     for (const book of books) {
       const wrap = document.createElement('div')
       wrap.className = book.sample ? 'book is-sample' : 'book'
@@ -55,10 +77,9 @@ export class Bookcase {
       spine.setAttribute('aria-label', spineLabel(book))
       spine.innerHTML = spineHTML(book)
       wrap.append(spine)
-      frag.append(wrap)
+      wraps.push(wrap)
       this.els.set(book.id, { book, wrap, spine })
     }
-    root.append(frag)
     root.classList.add('is-static', 'is-waiting')
 
     root.addEventListener('click', (e) => {
@@ -86,18 +107,24 @@ export class Bookcase {
       timer = setTimeout(() => root.classList.remove('is-static'), 120)
     }).observe(root)
 
-    Promise.all(SPINE_FONTS.map((f) => document.fonts.load(f)))
-      .catch(() => {})
-      .then(() => {
-        fitSpines()
-        for (const { book, spine } of this.els.values()) {
+    // Every book's place is worked out first, then the spines go onto the
+    // shelves a handful per frame (still hidden until the shelves scroll into
+    // view), so styling 95 detailed spines never blocks the page in one go.
+    this.layout()
+    this.ready = inBatches(wraps, (batch) => root.append(...batch)).then(() => {
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('is-static')))
+    })
+
+    Promise.all([loadSpineFonts().catch(() => {}), this.ready]).then(async () => {
+      fitSpines()
+      await inBatches([...this.els.values()], (batch) => {
+        for (const { book, spine } of batch) {
           spine.style.setProperty('--fs', book.fs)
           spine.style.setProperty('--afs', book.afs)
         }
-        this.layout()
       })
-    this.layout()
-    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('is-static')))
+      this.layout()
+    })
   }
 
   // Redraws spines after loans change (who has what arrives after the page).
@@ -124,7 +151,8 @@ export class Bookcase {
   }
 
   // Drop every visible book onto its shelf, left to right, top to bottom.
-  enter() {
+  async enter() {
+    await this.ready
     this.root.classList.remove('is-waiting')
     if (reduceMotion.matches) return
     this.order.forEach((book, i) => {

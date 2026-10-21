@@ -1,11 +1,9 @@
 import '@fontsource-variable/fraunces/opsz.css'
 import '@fontsource-variable/fraunces/opsz-italic.css'
 import '@fontsource-variable/inter'
-import '@fontsource-variable/cormorant-garamond'
-import '@fontsource/bebas-neue'
 import './styles.css'
 
-import { books, readerList, stats, meetups, photos, wishes, club, hash, random, readPageData, loadLibrary } from './lib/model.js'
+import { books, readerList, meetups, photos, wishes, club, hash, random, readPageData, loadLibrary } from './lib/model.js'
 import { Bookcase } from './lib/bookcase.js'
 import { Viewer } from './lib/viewer.js'
 import { startDust } from './lib/dust.js'
@@ -35,6 +33,8 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
 // `weekend` keeps books short enough to finish in a weekend, `fresh` the
 // books added this week.
 const state = { q: '', facet: null, available: false, weekend: false, fresh: false }
+// Shelves or covers: which way the books are shown (remembered per device).
+const display = { view: 'shelf' }
 
 // Toast
 const toastEl = $('[data-toast]')
@@ -60,6 +60,7 @@ const bookcase = new Bookcase($('[data-bookcase]'), {
         : `Showing ${shown} of ${total}${state.available ? ' available now' : ''}${state.weekend ? ', short enough for a weekend' : ''}${state.fresh ? ', new this week' : ''}${state.q ? ` for “${state.q}”` : ''}${state.facet ? ` ${FACETS[bookcase.arrange].phrase(state.facet.key)}` : ''}`
     emptyEl.hidden = shown > 0
     if (!shown) emptyEl.innerHTML = `Nobody has listed <strong>${escape(state.q || 'that')}</strong> yet. Ask in the group: someone might have it.`
+    if (display.view === 'covers') renderCovers()
   },
 })
 const viewer = new Viewer($('[data-viewer]'), { bookcase, toast })
@@ -194,6 +195,78 @@ chips.addEventListener('click', (e) => {
 })
 renderChips()
 
+// Covers: the same books, groups and filters as the shelves, as a grid of
+// covers. Spines are the signature, but on a phone their titles are tiny, and
+// covers are easier to browse.
+const viewSwitch = $('[data-view]')
+const coversEl = $('[data-covers]')
+const frame = $('.bookcase-frame')
+function renderCovers() {
+  const byMember = bookcase.arrange === 'reader'
+  coversEl.innerHTML = bookcase
+    .groups()
+    .map(
+      (g) => `
+      <section class="covers__group">
+        <h3 class="covers__head"><i style="--dot:${g.colour}"></i>${escape(g.label)}${g.sample ? '<span>Sample</span>' : ''}</h3>
+        <div class="covers__grid">${g.books.map((b) => coverCard(b, byMember, g.sample)).join('')}</div>
+      </section>`,
+    )
+    .join('')
+  emptyEl.hidden = bookcase.order.length > 0
+}
+// Under each cover: the writer when the heading already names the member,
+// otherwise whose shelf it's on. "Sample" goes on the heading when the whole
+// shelf is one.
+function coverCard(b, byMember, sampleShelf) {
+  const art = b.cover
+    ? `<img src="${escape(b.cover)}" alt="" loading="lazy" decoding="async" width="180" height="${Math.round(180 / b.aspect)}" />`
+    : `<span class="covers__cloth" style="--base:${b.base};--ink:${b.ink}">${escape(b.title)}</span>`
+  const label = `${b.title} by ${b.author}, ${b.sample ? `a sample book on ${b.owner}’s shelf` : `from ${b.owner}’s shelf`}${b.onLoan ? ', on loan' : ''}`
+  return `<button type="button" class="covers__item${b.sample ? ' is-sample' : ''}" data-id="${escape(b.id)}" aria-label="${escape(label)}">
+      <span class="covers__art">${art}${b.onLoan ? '<span class="covers__loan">On loan</span>' : ''}</span>
+      <span class="covers__title">${escape(b.title)}</span>
+      <span class="covers__meta">${escape(byMember ? b.author : b.owner)}${b.sample && !sampleShelf ? ' · sample' : ''}</span>
+    </button>`
+}
+function setView(next) {
+  display.view = next
+  try {
+    localStorage.setItem('hr-view', next)
+  } catch {
+    // Private browsing: the choice just isn't remembered.
+  }
+  viewSwitch.querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.value === next)))
+  frame.hidden = next === 'covers'
+  coversEl.hidden = next !== 'covers'
+  if (next === 'covers') renderCovers()
+  else bookcase.enter()
+}
+viewSwitch.addEventListener('click', (e) => {
+  const b = e.target.closest('button')
+  if (b && b.dataset.value !== display.view) setView(b.dataset.value)
+})
+viewSwitch.addEventListener('keydown', (e) => {
+  if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return
+  const other = viewSwitch.querySelector(`button:not([data-value="${display.view}"])`)
+  other.click()
+  other.focus()
+})
+coversEl.addEventListener('click', (e) => {
+  const item = e.target.closest('[data-id]')
+  if (item) viewer.open(books.find((b) => b.id === item.dataset.id), null)
+})
+try {
+  if (localStorage.getItem('hr-view') === 'covers') setView('covers')
+} catch {
+  // As above.
+}
+
+// Everything above is what the first screen and the shelves need. The rest of
+// the page (readers, calendar, newcomers, wanted) is drawn after a breath, so
+// the browser can paint and respond in between instead of one long task.
+await new Promise((resolve) => setTimeout(resolve, 0))
+
 // Readers section
 $('[data-readers]').innerHTML = readerList
   .map((r) => {
@@ -318,20 +391,8 @@ if (meetupsHTML) $('[data-meetups]').innerHTML = meetupsHTML
 else $('#calendar').hidden = true
 document.addEventListener('click', (e) => e.target.closest('[data-calendar-add]') && track('calendar_add'))
 
-// Under the hero: today's meetup if there is one, otherwise the next.
-{
-  const next = nextMeetup()
-  const line = $('[data-hero-next]')
-  if (next) {
-    const isToday = new Date(`${next.date}T00:00`).toDateString() === new Date().toDateString()
-    const when = new Date(`${next.date}T00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-    line.innerHTML = isToday
-      ? `<span class="hero__pulse" aria-hidden="true"></span><strong>Today</strong>, ${escape(next.time)} at <strong>${escape(next.venue)}</strong>${next.area ? `, ${escape(next.area)}` : ''} · <a href="${mapsLink(next)}" target="_blank" rel="noopener">Directions</a>`
-      : `Next meetup · <strong>${when}</strong> · ${escape(next.venue)}${next.area ? `, ${escape(next.area)}` : ''} · ${escape(next.time)} · <a href="#calendar">Calendar</a>${looksSignedIn() ? '' : ' · <a href="#first-meetup">New here?</a>'}`
-    line.classList.toggle('is-today', isToday)
-    line.hidden = false
-  }
-}
+// The hero's meetup line comes from the server; members don't need "New here?".
+if (looksSignedIn()) $('[data-newcomer]')?.remove()
 
 // For newcomers: what a meetup is like, the next one, photos, and questions.
 {
@@ -483,7 +544,10 @@ const HERO_SLOTS = [
   { x: 44, y: 44, r: -5, z: 5, depth: 1.6 },
 ]
 const heroBooks = $('[data-hero-books]')
-{
+// Only drawn where they're shown (wide screens), so phones don't download them.
+const wideHero = matchMedia('(min-width: 1081px)')
+function drawHeroBooks() {
+  if (!wideHero.matches || heroBooks.childElementCount) return
   const rand = random(hash(new Date().toISOString().slice(0, 10)))
   // Real books first; placeholders only fill in while shelves are still samples.
   const real = books.filter((b) => b.cover && !b.sample)
@@ -510,33 +574,18 @@ const heroBooks = $('[data-hero-books]')
     })
   }
 }
+drawHeroBooks()
+wideHero.addEventListener('change', drawHeroBooks)
 
-// Stats count up when the hero is on screen
-const statsEl = $('[data-stats]')
-const statItems = [
-  ['Books', stats.books],
-  ['Readers', stats.readers],
-  ['Genres', stats.genres],
-  ['Pages to share', stats.pages],
-]
-statsEl.innerHTML = statItems
-  .map(([label, value]) => `<div><dt>${label}</dt><dd data-to="${value}">${reduceMotion.matches ? value.toLocaleString('en-IN') : 0}</dd></div>`)
-  .join('')
-if (stats.samples) {
-  const note = document.createElement('p')
-  note.className = 'stats__note'
-  note.textContent =
-    stats.samples === stats.books
-      ? 'Every shelf is a sample for now: placeholder books until members add their own.'
-      : `${stats.samples} of these are sample books, standing in until their owners add real ones.`
-  statsEl.after(note)
-}
+// The numbers are in the page already; they count up from zero once, in
+// space held for the final figure, so nothing around them moves.
 if (!reduceMotion.matches) {
+  const cells = [...document.querySelectorAll('[data-stats] dd')]
   const start = performance.now() + 250
   const run = (now) => {
     const t = Math.min(1, Math.max(0, (now - start) / 1400))
     const ease = 1 - (1 - t) ** 3
-    statsEl.querySelectorAll('dd').forEach((dd) => (dd.textContent = Math.round(dd.dataset.to * ease).toLocaleString('en-IN')))
+    for (const dd of cells) dd.textContent = Math.round(dd.dataset.to * ease).toLocaleString('en-IN')
     if (t < 1) requestAnimationFrame(run)
   }
   requestAnimationFrame(run)
@@ -559,7 +608,12 @@ $('[data-bookcase]').addEventListener('pointerover', (e) => {
   }
 })
 
-startDust($('[data-dust]'))
+// The dust is decoration, so it waits until the page has settled, and stays
+// off on small or low-powered phones and when data saver is on.
+const idle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 1500))
+if (matchMedia('(min-width: 700px)').matches && (navigator.hardwareConcurrency ?? 8) > 4 && !navigator.connection?.saveData) {
+  idle(() => startDust($('[data-dust]')))
+}
 
 // A member's shelf (/shelf/piyush) opens on the library, showing just their books.
 const shelfSlug = location.pathname.match(/^\/shelf\/([^/]+)\/?$/)?.[1]

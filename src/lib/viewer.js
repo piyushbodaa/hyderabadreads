@@ -1,8 +1,13 @@
 // The reading room: a book slides off the shelf, turns to face you as a real
 // 3D object you can spin, and sits beside everything you need to borrow it.
 
-import { readerList, genreColour } from './model.js'
+import { readerList, genreColour, meetups } from './model.js'
 import { bookVars, spineHTML, frontHTML, backHTML, escape } from './render.js'
+import { session, lend, mine, askedFor, borrowedByMe, lentOut, nextMeetup, meetupPhrase, shortDate } from './session.js'
+import { track } from './track.js'
+
+const ICON_ASK =
+  '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.5h14v9H8l-4 3v-3H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>'
 
 const PERSPECTIVE = 1800
 const REST_X = 5
@@ -23,6 +28,8 @@ export class Viewer {
     this.book = null
     this.busy = false
     this.pushed = false
+    // Opened from the QR code on a bookplate: offer "I've got it" first.
+    this.gotMode = false
     this.raf = 0
     this.pose = { ry: REST_Y, vy: 0, target: REST_Y, tx: 0, ty: 0, px: 0, py: 0, drag: null }
 
@@ -31,6 +38,9 @@ export class Viewer {
       else if (e.target.closest('[data-prev]')) this.go(-1)
       else if (e.target.closest('[data-next]')) this.go(1)
       else if (e.target.closest('[data-ask]')) this.ask()
+      else if (e.target.closest('[data-request]')) this.request()
+      else if (e.target.closest('[data-got]')) this.gotIt()
+      else if (e.target.closest('[data-loan-action]')) this.loanAction(e.target.closest('[data-loan-action]'))
       else if (e.target.closest('[data-link]')) this.copyLink()
     })
     // On the document, not the dialog: swapping books replaces the focused
@@ -119,7 +129,7 @@ export class Viewer {
         easing: 'cubic-bezier(.2,.8,.2,1)',
       }).finished.catch(() => {})
     }
-    this.el.querySelector('[data-ask], [data-link]')?.focus({ preventScroll: true })
+    this.el.querySelector('.info__actions .btn')?.focus({ preventScroll: true })
     this.busy = false
   }
 
@@ -204,7 +214,7 @@ export class Viewer {
     this.build(book)
     this.renderInfo(book)
     this.resetPose()
-    this.el.querySelector('[data-ask], [data-link]')?.focus({ preventScroll: true })
+    this.el.querySelector('.info__actions .btn')?.focus({ preventScroll: true })
     this.holder.getAnimations().forEach((a) => a.cancel())
     this.info.getAnimations().forEach((a) => a.cancel())
     const slow = reduceMotion.matches ? 1 : 420
@@ -263,7 +273,6 @@ export class Viewer {
   renderInfo(book) {
     const reader = readerList.find((r) => r.name === book.owner)
     const meta = [book.year, book.pages && `${book.pages} pages`].filter(Boolean)
-    const askLabel = book.onLoanTo ? `Ask ${book.onLoanTo} for it next` : `Ask ${book.owner} to bring it`
     this.info.innerHTML = `
       <p class="info__meta">
         <span class="info__genre" style="--dot:${genreColour(book.genre)}">${escape(book.genre)}</span>
@@ -279,40 +288,123 @@ export class Viewer {
           <span class="info__label">${book.sample ? 'Sample on the shelf of' : 'On the shelf of'}</span>
           <a class="info__shelf" href="/shelf/${escape(reader?.slug ?? '')}">${escape(book.owner)}</a>
         </div>
-        ${book.onLoanTo ? `<span class="info__loan">With ${escape(book.onLoanTo)} right now</span>` : ''}
-      </div>
-      ${
-        book.sample
-          ? `<p class="info__sample">A placeholder while ${escape(book.owner)} adds their real books, so there’s nothing to borrow here yet.</p>`
-          : ''
-      }
-      <div class="info__actions">
         ${
-          book.sample
-            ? ''
-            : `<button class="btn btn--primary" type="button" data-ask>
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.5h14v9H8l-4 3v-3H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
-          ${escape(askLabel)}
-        </button>`
+          book.onLoanTo
+            ? `<span class="info__loan${book.overdue ? ' is-overdue' : ''}">With ${escape(book.onLoanTo)} right now</span>`
+            : book.onLoan
+              ? '<span class="info__loan">Out on loan right now</span>'
+              : ''
         }
-        <button class="btn btn--ghost btn--icon" type="button" data-link aria-label="Copy a link to this book" title="Copy link">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8.5 11.5a3.5 3.5 0 005 0l2.5-2.5a3.5 3.5 0 00-5-5l-1 1M11.5 8.5a3.5 3.5 0 00-5 0L4 11a3.5 3.5 0 005 5l1-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
-        </button>
       </div>
+      ${this.actionsHTML(book)}
       ${book.olKey ? `<a class="info__more" href="https://openlibrary.org${escape(book.olKey)}" target="_blank" rel="noopener">More on Open Library <span aria-hidden="true">↗</span></a>` : ''}
       <p class="info__keys" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd> browse <kbd>F</kbd> flip <kbd>Esc</kbd> close</p>`
+  }
+
+  // What a reader can do with this book depends on who they are: a visitor,
+  // its owner, someone who has it or has asked for it, or any other member.
+  actionsHTML(book) {
+    const link = `<button class="btn btn--ghost btn--icon" type="button" data-link aria-label="Copy a link to this book" title="Copy link">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8.5 11.5a3.5 3.5 0 005 0l2.5-2.5a3.5 3.5 0 00-5-5l-1 1M11.5 8.5a3.5 3.5 0 00-5 0L4 11a3.5 3.5 0 005 5l1-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+        </button>`
+    const button = (label, attrs, kind = 'primary') => `<button class="btn btn--${kind}" type="button" ${attrs}>${escape(label)}</button>`
+    const actions = (...items) => `<div class="info__actions">${items.join('')}${link}</div>`
+    const note = (text, extra = '') => `<p class="info__status${extra}">${text}</p>`
+    const owner = escape(book.owner)
+
+    if (book.sample) {
+      return note(`A placeholder while ${owner} adds their real books, so there’s nothing to borrow here yet.`, ' info__status--sample') + actions()
+    }
+    if (!session.member) {
+      const label = book.onLoan ? `Ask ${book.owner} about it` : `Ask ${book.owner} to bring it`
+      return (
+        (this.gotMode ? note(`Borrowing this from ${owner}? <a href="/me">Sign in with your link</a> to mark it as borrowed.`, ' info__status--got') : '') +
+        actions(`<button class="btn btn--primary" type="button" data-ask>${ICON_ASK}${escape(label)}</button>`)
+      )
+    }
+    if (mine(book)) {
+      const out = lentOut(book)
+      return out
+        ? note(`This one’s yours. It’s with ${escape(out.borrower)} since ${shortDate(out.since)}.`) +
+            actions(button('It’s back with me', `data-loan-action="return" data-loan="${out.id}"`))
+        : note('This one’s yours.') + actions(`<a class="btn btn--ghost" href="/me">Manage on My shelf</a>`)
+    }
+    const have = borrowedByMe(book)
+    if (have) {
+      return note(`You’ve had this since ${shortDate(have.since)}.`) + actions(button('I’ve given it back', `data-loan-action="return" data-loan="${have.id}"`))
+    }
+    const asked = askedFor(book)
+    const got = this.gotMode && !book.onLoan
+      ? note(`Borrowing this from ${owner}?`, ' info__status--got') + `<div class="info__actions">${button('Yes, I’ve got it', 'data-got')}</div>`
+      : ''
+    if (asked) {
+      return (
+        got +
+        note(`You’ve asked ${owner} for it${asked.meetup ? ` for ${escape(meetupPhrase(meetups.find((m) => m.date === asked.meetup) ?? { date: asked.meetup, venue: 'the meetup' }))}` : ''}.`) +
+        actions(button(`Message ${book.owner}`, 'data-ask', 'ghost'), button('Cancel request', `data-loan-action="cancel" data-loan="${asked.id}"`, 'ghost'))
+      )
+    }
+    return (
+      got +
+      actions(
+        `<button class="btn btn--primary" type="button" data-request>${ICON_ASK}${escape(book.onLoan ? 'Ask to be next' : `Ask ${book.owner} to bring it`)}</button>`,
+        this.gotMode || book.onLoan ? '' : button('I’ve got it', 'data-got', 'ghost'),
+      )
+    )
+  }
+
+  refresh() {
+    if (this.isOpen && this.book) this.renderInfo(this.book)
+  }
+
+  async request() {
+    const b = this.book
+    try {
+      await lend('request', { book: b.id })
+      this.refresh()
+      track('borrow_request')
+      await this.ask({ sent: true })
+    } catch (err) {
+      this.toast(err.message)
+    }
+  }
+
+  async gotIt() {
+    try {
+      const { owner } = await lend('got', { book: this.book.id })
+      this.gotMode = false
+      this.refresh()
+      track('borrow_got')
+      this.toast(`Enjoy it! ${owner} can see it’s with you.`)
+    } catch (err) {
+      this.toast(err.message)
+    }
+  }
+
+  async loanAction(button) {
+    try {
+      await lend(button.dataset.loanAction, { loan: Number(button.dataset.loan) })
+      this.refresh()
+      this.toast({ return: 'Marked as returned.', cancel: 'Request cancelled.' }[button.dataset.loanAction] ?? 'Done.')
+    } catch (err) {
+      this.toast(err.message)
+    }
   }
 
   link(book) {
     return `${location.origin}/book/${book.id}`
   }
 
-  async ask() {
+  // The message to the owner names the actual meetup, and goes through the
+  // phone's share sheet (WhatsApp and the rest) or onto the clipboard.
+  async ask({ sent = false } = {}) {
     const b = this.book
-    const text = b.onLoanTo
-      ? `Hi ${b.onLoanTo}! When you’re done with “${b.title}” (${b.owner}’s copy), could I borrow it next? 📚`
-      : `Hi ${b.owner}! Could you bring “${b.title}” by ${b.author} to the next Hyderabad Reads meetup? 📚`
+    const when = meetupPhrase(nextMeetup())
+    const text = b.onLoan
+      ? `Hi ${b.owner}! I’d love to borrow “${b.title}” when it’s back. Could you bring it to a meetup after that? 📚`
+      : `Hi ${b.owner}! Could you bring “${b.title}” by ${b.author} to ${when}? 📚`
     const full = `${text}\n${this.link(b)}`
+    if (!sent) track('ask_click')
     if (navigator.share && matchMedia('(pointer: coarse)').matches) {
       try {
         await navigator.share({ text: full })
@@ -321,7 +413,9 @@ export class Viewer {
         if (err.name === 'AbortError') return
       }
     }
-    this.toast((await copy(full)) ? 'Message copied. Paste it in the club group.' : full)
+    const copied = await copy(full)
+    if (sent) this.toast(copied ? `Asked! ${b.owner} will see it on their shelf. A message is copied too, for the group.` : full)
+    else this.toast(copied ? 'Message copied. Paste it in the club group.' : full)
   }
 
   async copyLink() {

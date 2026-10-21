@@ -5,6 +5,7 @@ import { currentMember, redeemInvite, endSession, sessionCookies, clearedCookies
 import { searchBooks, fetchCover } from './openlibrary.js'
 import { mediaResponse } from './media.js'
 import { Problem, myShelf, addBook, updateBook, removeBook, shelfAction, adminData, adminAction } from './members.js'
+import { lendingFor, loanAction, digest } from './loans.js'
 
 export function json(data, status = 200, cookies = []) {
   const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
@@ -42,7 +43,14 @@ export async function appResponse(request, context) {
 
     switch (`${method} ${route}`) {
       case 'GET me':
-        return json(member ? await myShelf(db, member) : { member: null })
+        return json(member ? { ...(await myShelf(db, member)), lending: await lendingFor(db, member) } : { member: null })
+      case 'POST loans': {
+        const result = await loanAction(db, signedIn(), body)
+        return json({ ...result, lending: await lendingFor(db, member) })
+      }
+      case 'GET digest':
+        signedIn()
+        return json(await digest(db))
       case 'POST signout':
         await endSession(db, request)
         return json({ ok: true }, 200, clearedCookies(request))

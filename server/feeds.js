@@ -72,6 +72,7 @@ function llmsFull(data, today) {
     [
       `- **${b.title}** by ${b.author}. ${[b.genre, b.language !== 'English' && b.language, b.year].filter(Boolean).join(', ')}.`,
       b.sample && ' A sample book, standing in until the owner’s real list is in.',
+      b.onLoan && ' Out on loan right now.',
       b.blurb && ` ${b.blurb}`,
       b.note && ` Owner’s note: “${b.note}”`,
       ` [Open](${bookUrl(b)})`,
@@ -120,6 +121,7 @@ function json(data, today) {
       blurb: b.blurb || null,
       note: b.note || null,
       sample: b.sample,
+      onLoan: b.onLoan,
       url: bookUrl(b),
       cover: b.cover ? `${SITE}${b.cover}` : null,
     })),

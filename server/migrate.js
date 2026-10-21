@@ -98,6 +98,30 @@ export const MIGRATIONS = [
       `CREATE INDEX IF NOT EXISTS sessions_member ON sessions (member_id)`,
     ],
   },
+  {
+    id: 3,
+    name: 'lending',
+    statements: [
+      // Every request and loan, kept after it ends: the history behind the
+      // club's stats. A book is out to at most one member at a time, and a
+      // member can ask for a book only once at a time.
+      `CREATE TABLE IF NOT EXISTS loans (
+        id serial PRIMARY KEY,
+        book_id int NOT NULL REFERENCES books (id),
+        borrower_id int NOT NULL REFERENCES members (id),
+        status text NOT NULL CHECK (status IN ('requested', 'lent', 'returned', 'declined', 'cancelled')),
+        meetup_date date,
+        requested_at timestamptz,
+        lent_at timestamptz,
+        returned_at timestamptz,
+        closed_at timestamptz,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS loans_one_out ON loans (book_id) WHERE status = 'lent'`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS loans_one_request ON loans (book_id, borrower_id) WHERE status = 'requested'`,
+      `CREATE INDEX IF NOT EXISTS loans_borrower ON loans (borrower_id)`,
+    ],
+  },
 ]
 
 export async function migrate(db, { seed = true } = {}) {

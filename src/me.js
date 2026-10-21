@@ -18,6 +18,7 @@ if (params.size) history.replaceState(null, '', '/me')
 
 let me = null
 let books = []
+let lending = null
 let results = []
 let searchTimer
 let searchSeq = 0
@@ -29,6 +30,7 @@ async function start() {
     const data = await api('/api/me')
     me = data.member
     books = data.books ?? []
+    lending = data.lending ?? null
   } catch (err) {
     desk.innerHTML = `<div class="desk__head"><p class="kicker">My shelf</p><h1 class="desk__title">Something went wrong</h1>
       <p class="desk__lede">${escape(err.message)}</p></div>`
@@ -47,10 +49,13 @@ async function start() {
       </p>
       <p class="desk__links">
         <a href="/shelf/${escape(me.slug)}">See your shelf</a>
+        <a href="/bookplates">Print bookplates</a>
+        <a href="/digest">This week at the club</a>
         <button type="button" class="linkish" data-copy-shelf>Copy a link to it</button>
       </p>
     </div>
     <div data-samples></div>
+    <div data-lending></div>
     <section class="panel" aria-labelledby="add-title">
       <h2 id="add-title" class="panel__title">Add a book</h2>
       <form class="finder" data-search-form role="search">
@@ -79,6 +84,7 @@ async function start() {
       <ul class="mybooks" data-books></ul>
     </section>`
   renderSamples()
+  renderLending()
   renderBooks()
   wire()
   if (welcome) toast(`You’re signed in on this ${matchMedia('(pointer: coarse)').matches ? 'phone' : 'browser'}.`)
@@ -160,6 +166,7 @@ function bookItem(b) {
         ${b.note ? `<p class="mybook__note">“${escape(b.note)}”</p>` : ''}
         <div class="mybook__actions">
           <button type="button" class="linkish" data-edit>Edit</button>
+          ${b.sample || lending?.lentOut.some((l) => l.bookId === b.id) ? '' : '<button type="button" class="linkish" data-lend-open>Lend to…</button>'}
           <button type="button" class="linkish linkish--danger" data-remove>Remove</button>
         </div>
       </div>
@@ -210,11 +217,13 @@ function wire() {
     if (t.matches('[data-pick]')) return openAddForm(t.closest('[data-result]'), results[Number(t.dataset.pick)])
     if (t.matches('[data-cancel-add]')) return t.closest('.addform').remove()
     if (t.matches('[data-samples-action]')) return samplesAction(t)
+    if (t.matches('[data-loan-action]')) return loanAction(t, { action: t.dataset.loanAction, loan: Number(t.dataset.loan) })
     const item = t.closest('[data-id]')
     if (!item) return
     const book = books.find((b) => b.id === item.dataset.id)
     if (t.matches('[data-edit]')) return editForm(item, book)
     if (t.matches('[data-remove]')) return confirmRemove(item, book)
+    if (t.matches('[data-lend-open]')) return lendForm(item, book)
     if (t.matches('[data-confirm-remove]')) return removeBook(item, book, t)
     if (t.matches('[data-keep]')) return item.replaceWith(htmlToNode(bookItem(book)))
     if (t.matches('[data-cancel-edit]')) return item.replaceWith(htmlToNode(bookItem(book)))
@@ -229,6 +238,10 @@ function wire() {
     } else if (form.matches('[data-manual-form]')) {
       e.preventDefault()
       await addBook(form, fields(form))
+    } else if (form.matches('[data-lend-form]')) {
+      e.preventDefault()
+      const to = new FormData(form).get('to')
+      if (to) await loanAction(form.querySelector('[type=submit]'), { action: 'lend', book: form.closest('[data-id]').dataset.id, to })
     } else if (form.matches('[data-edit-form]')) {
       e.preventDefault()
       await saveEdit(form)
@@ -384,6 +397,87 @@ async function samplesAction(button) {
     button.disabled = false
     toast(err.message)
   }
+}
+
+// Lending at a glance: what to bring to the next meetup, what's out, what
+// you've borrowed and what you've asked for.
+function renderLending() {
+  const box = desk.querySelector('[data-lending]')
+  if (!lending) return (box.innerHTML = '')
+  const when = (iso) => (iso ? new Date(`${iso}T00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : 'the next meetup')
+  const since = (iso) => new Date(`${iso}T00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  const late = (l) => (l.overdue ? ` <span class="tag tag--late">${lending.overdueWeeks}+ weeks</span>` : '')
+  const row = (main, actions) => `<li class="lend"><p class="lend__text">${main}</p><div class="lend__actions">${actions}</div></li>`
+  const act = (label, action, loan, kind = 'ghost') =>
+    `<button type="button" class="btn btn--${kind}" data-loan-action="${action}" data-loan="${loan}">${label}</button>`
+
+  const groups = []
+  if (lending.toBring.length) {
+    const byMeetup = Map.groupBy ? Map.groupBy(lending.toBring, (l) => l.meetup ?? '') : group(lending.toBring)
+    for (const [meetup, list] of byMeetup) {
+      groups.push(`<h3 class="lend__head">Bring to ${escape(when(meetup))}</h3><ul class="lends">${list
+        .map((l) =>
+          row(
+            `<strong>${escape(l.title)}</strong> for ${escape(l.borrower)}${l.stillOut ? ' <span class="tag">Still out</span>' : ''}`,
+            `${act('Lent it', 'lend', l.id, 'primary')}${act('Can’t this time', 'decline', l.id)}`,
+          ),
+        )
+        .join('')}</ul>`)
+    }
+  }
+  if (lending.lentOut.length) {
+    groups.push(`<h3 class="lend__head">Out with others</h3><ul class="lends">${lending.lentOut
+      .map((l) => row(`<strong>${escape(l.title)}</strong> with ${escape(l.borrower)} since ${since(l.since)}${late(l)}`, `${act('It’s back', 'return', l.id, 'primary')}${act('Undo', 'undo', l.id)}`))
+      .join('')}</ul>`)
+  }
+  if (lending.borrowed.length) {
+    groups.push(`<h3 class="lend__head">Borrowed</h3><ul class="lends">${lending.borrowed
+      .map((l) => row(`<strong>${escape(l.title)}</strong> from ${escape(l.owner)} since ${since(l.since)}${late(l)}`, act('I’ve given it back', 'return', l.id, 'primary')))
+      .join('')}</ul>`)
+  }
+  if (lending.asked.length) {
+    groups.push(`<h3 class="lend__head">You asked for</h3><ul class="lends">${lending.asked
+      .map((l) => row(`<strong>${escape(l.title)}</strong> from ${escape(l.owner)}, for ${escape(when(l.meetup))}`, act('Cancel', 'cancel', l.id)))
+      .join('')}</ul>`)
+  }
+  box.innerHTML = groups.length ? `<section class="panel panel--lending" aria-label="Lending">${groups.join('')}</section>` : ''
+}
+
+function group(list) {
+  const map = new Map()
+  for (const l of list) map.set(l.meetup ?? '', [...(map.get(l.meetup ?? '') ?? []), l])
+  return map
+}
+
+async function loanAction(button, body) {
+  button.disabled = true
+  try {
+    const data = await api('/api/loans', { method: 'POST', body })
+    lending = data.lending
+    renderLending()
+    renderBooks()
+    toast(
+      { lend: 'Lent. Enjoy the meetup!', decline: 'Declined.', return: 'Back on the shelf.', undo: 'Undone.', cancel: 'Request cancelled.' }[body.action] ?? 'Done.',
+    )
+  } catch (err) {
+    button.disabled = false
+    toast(err.message)
+  }
+}
+
+// Lending in person, without a request first.
+function lendForm(item, book) {
+  item.querySelector('.mybook__actions').innerHTML = `
+    <form class="lendform" data-lend-form>
+      <label class="visually-hidden" for="lend-${escape(book.id)}">Lend ${escape(book.title)} to</label>
+      <select class="input" id="lend-${escape(book.id)}" name="to" required>
+        <option value="">Lend to…</option>
+        ${(lending?.members ?? []).map((m) => `<option value="${escape(m.slug)}">${escape(m.name)}</option>`).join('')}
+      </select>
+      <button class="btn btn--primary" type="submit">Lend</button>
+      <button class="btn btn--ghost" type="button" data-keep>Cancel</button>
+    </form>`
+  item.querySelector('select').focus()
 }
 
 function htmlToNode(html) {

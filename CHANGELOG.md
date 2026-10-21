@@ -4,6 +4,17 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Borrowing, tracked from ask to return
+
+- **Ask to bring it** now records the request (when you're signed in), so the owner sees it on **My shelf** under "Bring to Sat 24 Oct". The ready-to-share message names the actual meetup too: "…to Saturday's meetup at Chilaka (24 Oct)?"
+- Owners tap **Lent it** when they hand a book over, or lend straight to any member. Either the owner or the borrower taps **It's back** when it comes home.
+- Signed-in members see who has each book ("With Rishi right now") and since when. Visitors only see that it's out.
+- Books out longer than six weeks are flagged, gently.
+- **QR bookplates** (/bookplates): print a sticker for each of your books. Scanning it at a meetup opens the book with **"Yes, I've got it"**, so the loan is recorded with one tap. There's also a printable card for the meetup table.
+- **Available now**: a new filter on the shelves hides books that are out, and samples.
+- **The weekly digest** (/digest): a ready-made WhatsApp message with new books, the next meetups, open requests and books that have been out a while.
+- Google Analytics counts three anonymous events: messages shared, requests made and books borrowed.
+
 ### Members manage their own shelves
 
 - Every member signs in with their own link. There's no password or email: an admin makes the link at **/admin** and sends it on WhatsApp.

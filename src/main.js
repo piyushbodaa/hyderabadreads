@@ -11,6 +11,7 @@ import { Viewer } from './lib/viewer.js'
 import { startDust } from './lib/dust.js'
 import { escape } from './lib/render.js'
 import { looksSignedIn } from './lib/api.js'
+import { loadSession, onSession } from './lib/session.js'
 
 // Signed-in members get straight to their own shelf from the header.
 if (looksSignedIn()) {
@@ -27,7 +28,8 @@ const $ = (sel) => document.querySelector(sel)
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
 // `facet` is the chip picked under the search box: one shelf of the current
 // arrangement (a member, genre, language or writer letter), or null for all.
-const state = { q: '', facet: null }
+// `available` hides books that are out on loan, and samples.
+const state = { q: '', facet: null, available: false }
 
 // Toast
 const toastEl = $('[data-toast]')
@@ -50,7 +52,7 @@ const bookcase = new Bookcase($('[data-bookcase]'), {
     countEl.textContent =
       shown === total
         ? `${total} books from ${readerList.length} readers`
-        : `Showing ${shown} of ${total}${state.q ? ` for “${state.q}”` : ''}${state.facet ? ` ${FACETS[bookcase.arrange].phrase(state.facet.key)}` : ''}`
+        : `Showing ${shown} of ${total}${state.available ? ' available now' : ''}${state.q ? ` for “${state.q}”` : ''}${state.facet ? ` ${FACETS[bookcase.arrange].phrase(state.facet.key)}` : ''}`
     emptyEl.hidden = shown > 0
     if (!shown) emptyEl.innerHTML = `Nobody has listed <strong>${escape(state.q || 'that')}</strong> yet. Ask in the group: someone might have it.`
   },
@@ -141,7 +143,9 @@ let facetGroups = []
 function renderChips() {
   facetGroups = bookcase.groups(bookcase.arrange, books)
   chips.setAttribute('aria-label', `Show books by ${FACETS[bookcase.arrange].noun}`)
+  const available = books.filter((b) => !b.onLoan && !b.sample).length
   chips.innerHTML = [
+    `<button type="button" class="chip chip--toggle" aria-pressed="${state.available}" data-available>Available now <span>${available}</span></button>`,
     `<button type="button" class="chip" aria-pressed="${!state.facet}" data-key="">All <span>${books.length}</span></button>`,
     ...facetGroups.map(
       (g) =>
@@ -152,17 +156,26 @@ function renderChips() {
 }
 function currentFilter() {
   const terms = fold(state.q).split(/\s+/).filter(Boolean)
-  return (b) => (!state.facet || state.facet.ids.has(b.id)) && terms.every((t) => haystacks.get(b).includes(t))
+  return (b) =>
+    (!state.available || (!b.onLoan && !b.sample)) &&
+    (!state.facet || state.facet.ids.has(b.id)) &&
+    terms.every((t) => haystacks.get(b).includes(t))
 }
 function selectFacet(key) {
   const group = key ? facetGroups.find((g) => g.key === key) : null
   state.facet = group ? { key: group.key, ids: new Set(group.books.map((b) => b.id)) } : null
-  chips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.key === (state.facet?.key ?? ''))))
+  chips.querySelectorAll('.chip[data-key]').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.key === (state.facet?.key ?? ''))))
   applyFilter()
 }
 chips.addEventListener('click', (e) => {
   const chip = e.target.closest('.chip')
-  if (chip) selectFacet(chip.dataset.key === state.facet?.key ? '' : chip.dataset.key)
+  if (!chip) return
+  if (chip.matches('[data-available]')) {
+    state.available = !state.available
+    chip.setAttribute('aria-pressed', String(state.available))
+    return applyFilter()
+  }
+  selectFacet(chip.dataset.key === state.facet?.key ? '' : chip.dataset.key)
 })
 renderChips()
 
@@ -387,4 +400,22 @@ if (shelfOwner) {
   selectFacet(shelfOwner.name)
   requestAnimationFrame(() => $('#library').scrollIntoView({ behavior: 'auto' }))
 }
+
+// The QR code on a bookplate opens /book/<id>?got=1: someone has the book in
+// their hands at a meetup, so "I've got it" comes first.
+const params = new URLSearchParams(location.search)
+if (params.has('got')) {
+  viewer.gotMode = true
+  params.delete('got')
+  history.replaceState(history.state, '', location.pathname + (params.size ? `?${params}` : ''))
+}
 viewer.syncToUrl()
+
+// Signed-in members see who has which book, and can ask, lend and return.
+onSession(() => {
+  bookcase.refresh()
+  renderChips()
+  applyFilter()
+  viewer.refresh()
+})
+loadSession()

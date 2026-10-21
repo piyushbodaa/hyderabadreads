@@ -58,4 +58,4 @@ Every change to the site goes through a pull request, so the [pull requests](htt
 
 ## License
 
-[MIT](LICENSE). Book covers and publication data come from [Open Library](https://openlibrary.org) and belong to their respective publishers. They are not covered by this license.
+[MIT](LICENSE). Publication data comes from [Open Library](https://openlibrary.org). Covers come from Apple Books or Open Library and belong to their respective publishers. They are not covered by this license.

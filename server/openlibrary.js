@@ -66,11 +66,12 @@ export async function fetchCover({ coverId, isbn, size = 'L' }, { fetch = global
   }
 }
 
-// Shrinks a cover to a 520px-wide WebP and picks its spine colours: the
+// Shrinks a cover to an 800px-wide WebP, sharp on a phone's high-density
+// screen at the size the book opens to, and picks its spine colours: the
 // cover's most common colour (usually its background, which is what real
 // spines carry) and, as the accent, the most vivid colour that differs from it.
 export async function processCover(bytes) {
-  const { data: webp, info } = await sharp(bytes).rotate().resize({ width: 520, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer({ resolveWithObject: true })
+  const { data: webp, info } = await sharp(bytes).rotate().resize({ width: 800, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer({ resolveWithObject: true })
   return { webp, width: info.width, height: info.height, ...(await palette(bytes)) }
 }
 

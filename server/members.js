@@ -2,7 +2,8 @@
 // admins) look after the club's members and send them sign-in links.
 import { bookSlug, slugify } from '../src/lib/slug.js'
 import { createInvite } from './auth.js'
-import { fetchCover, processCover, isIsbn, cleanIsbn } from './openlibrary.js'
+import { processCover, isIsbn, cleanIsbn } from './openlibrary.js'
+import { bookCover } from './covers.js'
 import { storeMedia } from './media.js'
 
 // A request the server refuses, with a message the page can show as it is.
@@ -45,10 +46,11 @@ export async function addBook(db, member, input, { fetch } = {}) {
   const coverId = whole(input.coverId, 1, 1e10)
   const olKey = /^\/works\/OL\d+W$/.test(input.olKey ?? '') ? input.olKey : null
 
-  // The cover comes from Open Library, fetched and resized here. Without one
-  // the book still goes on the shelf, as a cloth-bound spine.
+  // The cover comes from Apple Books or Open Library (server/covers.js),
+  // fetched and resized here. Without one the book still goes on the shelf,
+  // as a cloth-bound spine.
   let cover = {}
-  const bytes = await fetchCover({ isbn, coverId }, { fetch })
+  const bytes = await bookCover({ title, author, isbn, coverId }, { fetch })
   if (bytes) {
     try {
       const { webp, width, height, color, accent } = await processCover(bytes)

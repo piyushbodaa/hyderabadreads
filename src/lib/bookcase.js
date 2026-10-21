@@ -3,7 +3,7 @@
 // Books are absolutely positioned with transforms, so every move is a GPU
 // transition rather than a reflow.
 
-import { books, genreColour, hash, fitSpines, SPINE_FONTS, MAX_SPINE_HEIGHT } from './model.js'
+import { books, readerList, genreColour, hash, fitSpines, SPINE_FONTS, MAX_SPINE_HEIGHT } from './model.js'
 import { GENRES } from '../data/library.js'
 import { bookVars, spineHTML, escape } from './render.js'
 import { DECOR } from './decor.js'
@@ -23,7 +23,7 @@ export class Bookcase {
     this.tip = tip
     this.onOpen = onOpen
     this.onLayout = onLayout
-    this.arrange = 'genre'
+    this.arrange = 'reader'
     this.filter = () => true
     this.order = []
     this.rows = []
@@ -149,19 +149,30 @@ export class Bookcase {
         .map((l) => ({ key: l, label: l, colour: `hsl(${hash(l) % 360} 45% 62%)`, books: map.get(l) }))
     }
 
-    const known = Object.keys(GENRES)
-    const map = by((b) => b.genre)
-    return [...map.keys()]
-      .sort((a, b) => (known.indexOf(a) + 1 || 99) - (known.indexOf(b) + 1 || 99) || a.localeCompare(b))
-      .map((g) => ({ key: g, label: g, colour: genreColour(g), books: map.get(g) }))
+    if (this.arrange === 'genre') {
+      const known = Object.keys(GENRES)
+      const map = by((b) => b.genre)
+      return [...map.keys()]
+        .sort((a, b) => (known.indexOf(a) + 1 || 99) - (known.indexOf(b) + 1 || 99) || a.localeCompare(b))
+        .map((g) => ({ key: g, label: g, colour: genreColour(g), books: map.get(g) }))
+    }
+
+    return readerList
+      .map((r) => ({ key: r.name, label: r.name, colour: `hsl(${r.hue} 55% 70%)`, books: r.books.filter(this.filter) }))
+      .filter((g) => g.books.length)
   }
 
   layout({ cascade = false } = {}) {
     const width = this.root.clientWidth
-    const s = width < 520 ? 0.74 : width < 900 ? 0.86 : 1
+    const phone = width < 520
+    const pad = phone ? 12 : PAD
+    // A phone shelf holds about 580 units of spine, so two members' shelves of
+    // five books sit side by side instead of one per row.
+    const s = phone ? Math.min(0.74, (width - pad * 2) / 580) : width < 900 ? 0.86 : 1
+    const gap = GROUP_GAP * s
     const rowH = (HEADROOM + MAX_SPINE_HEIGHT + PLANK) * s
     const plankTop = (HEADROOM + MAX_SPINE_HEIGHT) * s
-    const right = width - PAD
+    const right = width - pad
     this.root.style.setProperty('--s', s)
     this.root.style.setProperty('--plank', `${PLANK * s}px`)
 
@@ -169,31 +180,31 @@ export class Bookcase {
     const labels = []
     const rowEnds = []
     let row = 0
-    let x = PAD
+    let x = pad
 
     for (const group of this.groups()) {
       const widths = group.books.map((b) => b.t * s)
       const booksW = widths.reduce((sum, w) => sum + w + GAP, -GAP)
       const labelW = group.label ? this.labelWidth(group) : 0
       const slotW = Math.max(booksW, labelW)
-      if (x > PAD && x + Math.min(slotW, right - PAD) > right) {
-        rowEnds[row++] = x - GROUP_GAP
-        x = PAD
+      if (x > pad && x + Math.min(slotW, right - pad) > right) {
+        rowEnds[row++] = x - gap
+        x = pad
       }
       const label = group.label && { group, x, row, w: Math.min(slotW, right - x) }
       let bx = x + Math.max(0, (Math.min(slotW, right - x) - booksW) / 2)
       group.books.forEach((book, i) => {
         if (bx + widths[i] > right) {
           rowEnds[row++] = bx
-          bx = PAD
+          bx = pad
         }
         placed.push({ book, x: bx, row })
         bx += widths[i] + GAP
       })
       if (label) labels.push(label)
-      x = Math.max(bx - GAP, label && label.row === row ? label.x + label.w : 0) + GROUP_GAP
+      x = Math.max(bx - GAP, label && label.row === row ? label.x + label.w : 0) + gap
     }
-    rowEnds[row] = x - GROUP_GAP
+    rowEnds[row] = x - gap
     const rows = placed.length ? row + 1 : 0
 
     // Books
@@ -256,7 +267,7 @@ export class Bookcase {
     this.decor = []
     rowEnds.slice(0, rows).forEach((end, r) => {
       const space = right - end - 18
-      const item = DECOR[(r + ['genre', 'language', 'writer'].indexOf(this.arrange)) % DECOR.length]
+      const item = DECOR[(r + ['reader', 'genre', 'language', 'writer'].indexOf(this.arrange)) % DECOR.length]
       if (space < (item.w + 28) * s) return
       const el = document.createElement('div')
       el.className = `decor decor--${item.name}`

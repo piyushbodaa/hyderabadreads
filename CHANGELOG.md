@@ -4,6 +4,15 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Faster and easier on a phone
+
+- The first screen loads faster on phones, and nothing on it jumps while it loads:
+  - the numbers and the next meetup arrive with the page;
+  - two decorative spine fonts and the floating dust wait until they're needed;
+  - the shelves are built a few books at a time instead of all at once, so the page doesn't freeze.
+- **Covers:** a switch beside the search shows the same books as a grid of covers, three across on a phone. It remembers your choice.
+- On a phone, readers are one row to swipe through, the header gets a calendar button, and tapping a text box no longer makes an iPhone zoom in.
+
 ### Wanted, the club in numbers, and your year
 
 - **Wanted shelf:** members tap **Want** on any search result to add a book they're looking for. Wanted books sit under the shelves as empty outlines with "Rama is looking". If someone already has the book on their shelf, it says so; otherwise any member can tap **I have it**, which writes a message for the group.

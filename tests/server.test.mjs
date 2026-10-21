@@ -52,6 +52,31 @@ test('the home page carries the library data and the club’s structured data', 
   assert.doesNotMatch(html, /<!--hr:/)
 })
 
+test('the hero’s numbers and next meetup are in the page before any script runs', () => {
+  const data = {
+    members: [{ name: 'Piyush', slug: 'piyush' }, { name: 'Rama', slug: 'rama' }],
+    books: [
+      { id: 'a', title: 'A', author: 'X', owner: 'Piyush', genre: 'Fiction', pages: 300, sample: true },
+      { id: 'b', title: 'B', author: 'Y', owner: 'Rama', genre: 'History', pages: 1200 },
+    ],
+    meetups: [
+      { date: '2026-10-18', time: '1 to 4 PM', venue: 'Old Place', area: 'Banjara Hills' },
+      { date: '2026-10-25', time: '1 to 4 PM', venue: 'Called Off', area: 'Kondapur', cancelled: true },
+      { date: '2026-11-01', time: '1 to 4 PM', venue: 'Lamakaan', area: 'Banjara Hills' },
+    ],
+    club: {},
+  }
+  const home = (today) => renderPage({ template, notFound, data, route: routeFor('home'), today }).html
+  const html = home('2026-10-21')
+  assert.match(html, /Next meetup · <strong>Sun 1 Nov<\/strong> · Lamakaan, Banjara Hills · 1 to 4 PM/)
+  assert.match(html, /<dt>Books<\/dt><dd data-to="2"[^>]*>2<\/dd>/)
+  assert.match(html, /<dt>Pages to share<\/dt><dd data-to="1500"[^>]*>1,500<\/dd>/)
+  assert.match(html, /One of these is a sample book,/)
+  assert.match(html, /<p class="section-sub" data-result-count>2 books from 2 readers<\/p>/)
+  assert.match(home('2026-11-01'), /<strong>Today<\/strong>, 1 to 4 PM at <strong>Lamakaan<\/strong>/)
+  assert.doesNotMatch(home('2026-11-02'), /data-hero-next/)
+})
+
 test('a book page gets its own title, link preview and Book data', async () => {
   const res = await page('book', 'dune-herbert')
   assert.equal(res.status, 200)

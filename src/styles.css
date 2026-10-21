@@ -615,6 +615,7 @@ kbd {
 .search input {
   flex: 1;
   min-width: 0;
+  text-overflow: ellipsis;
   border: 0;
   outline: 0;
   background: none;
@@ -685,6 +686,8 @@ kbd {
 .chips {
   display: flex;
   gap: 8px;
+  /* Held open before the chips are drawn, so the shelves don't jump. */
+  min-height: 38px;
   max-width: 1280px;
   margin: 0 auto 26px;
   padding: 2px;
@@ -754,6 +757,175 @@ kbd {
 .chip--toggle[aria-pressed='true'] {
   border-style: solid;
   background: var(--amber-light);
+}
+
+/* ─── Shelves or covers ───────────────────────────────────────────────────── */
+
+.viewswitch {
+  display: flex;
+  margin-left: auto;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+
+.viewswitch button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 36px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.viewswitch button svg {
+  width: 19px;
+  height: 19px;
+}
+
+.viewswitch button[aria-checked='true'] {
+  background: var(--surface-2);
+  color: var(--amber-light);
+}
+
+.covers[hidden],
+.bookcase-frame[hidden] {
+  display: none;
+}
+
+.covers {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.covers__group + .covers__group {
+  margin-top: 30px;
+}
+
+.covers__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--text-2);
+  font: 600 12px/1 var(--sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.covers__head i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+.covers__head span {
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.covers__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 22px 16px;
+}
+
+.covers__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.covers__art {
+  position: relative;
+  display: block;
+  margin-bottom: 6px;
+  overflow: hidden;
+  border-radius: 3px 5px 5px 3px;
+  box-shadow: 0 14px 24px -10px rgb(0 0 0 / 0.8);
+  transition: transform 0.35s var(--ease-out);
+}
+
+.covers__item:hover .covers__art,
+.covers__item:focus-visible .covers__art {
+  transform: translateY(-4px);
+}
+
+.covers__art img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.covers__cloth {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 2 / 3;
+  padding: 12px;
+  background: var(--base);
+  color: var(--ink);
+  font: 500 15px/1.2 var(--serif);
+  text-align: center;
+}
+
+.covers__item.is-sample .covers__art {
+  opacity: 0.72;
+}
+
+.covers__loan {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #c8432e;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.covers__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font: 500 15px/1.25 var(--serif);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.covers__meta {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Sections below the first screen are laid out and painted only as they come
+   near, which keeps the first screen fast on phones. */
+.meetups,
+.first,
+.readers,
+.join {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
+.footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
 }
 
 /* ─── Wanted ──────────────────────────────────────────────────────────────── */
@@ -3917,13 +4089,17 @@ textarea.input {
     margin-top: 40px;
   }
 
+  /* Search and the shelves/covers switch share a line; the arrangement sits below. */
   .controls {
-    flex-direction: column;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .controls .segmented {
+    grid-column: 1 / -1;
   }
 
   .search {
-    flex: none;
     max-width: none;
   }
 
@@ -3989,5 +4165,98 @@ textarea.input {
     animation-iteration-count: 1 !important;
     animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Phones: the layout pass ─────────────────────────────────────────────── */
+
+/* iPhones zoom in on any text box under 16px when it's tapped, and stay zoomed. */
+@media (pointer: coarse) {
+  .search input,
+  .input,
+  .lendform .input,
+  .venueform .input {
+    font-size: 16px;
+  }
+}
+
+/* The calendar icon replaces "Calendar" where the text links don't fit. The
+   smallest phones drop it with the other icons, to keep "Add your books". */
+.topnav .topnav__cal {
+  display: none;
+}
+
+@media (min-width: 381px) and (max-width: 640px) {
+  .topnav .topnav__cal {
+    display: grid;
+  }
+}
+
+@media (max-width: 640px) {
+  /* GitHub stays in the footer; the header keeps what the club uses. */
+  .topnav .topnav__gh {
+    display: none;
+  }
+
+  /* Readers become one row to swipe through, instead of a tall column of cards. */
+  .reader-grid {
+    display: flex;
+    gap: 10px;
+    margin-right: calc(var(--gutter) * -1);
+    padding: 2px var(--gutter) 6px 2px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .reader-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .reader-grid > li {
+    flex: none;
+    width: 210px;
+    scroll-snap-align: start;
+  }
+
+  .reader {
+    height: 100%;
+    padding: 14px 14px 0;
+  }
+
+  .reader__name {
+    font-size: 18px;
+  }
+
+  .reader__shelf {
+    height: 58px;
+    margin: 12px -14px 0;
+    padding: 0 14px;
+  }
+
+  /* Three covers across: small enough to browse, big enough to recognise. */
+  .covers__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px 12px;
+  }
+
+  .covers__title {
+    font-size: 13.5px;
+  }
+
+  .covers__meta {
+    font-size: 11.5px;
+  }
+
+  .covers__cloth {
+    padding: 8px;
+    font-size: 12.5px;
+  }
+
+  .covers__loan {
+    top: 5px;
+    right: 5px;
+    padding: 2px 6px;
+    font-size: 10px;
   }
 }

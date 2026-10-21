@@ -6,6 +6,7 @@
 import { esc, jsonForScript } from './html.js'
 import { SITE, NAME, ABOUT, GITHUB, MEETUP_FORMAT, todayInIndia, meetupClock } from './site.js'
 import { faq } from '../src/lib/faq.js'
+import { heroHTML } from './hero.js'
 
 const DEFAULT = {
   title: `${NAME} · Our shared library`,
@@ -34,6 +35,9 @@ export function renderPage({ template, notFound, data, route, origin = SITE, tod
     .replace('</head>', `<script type="application/ld+json">${jsonForScript(ld)}</script>\n  </head>`)
     .replace('<!--hr:data-->', `<script type="application/json" id="hr-data">${jsonForScript(data)}</script>`)
     .replace('<!--hr:noscript-->', catalogue(data, book, member))
+    .replace('<!--hr:hero-->', heroHTML(data, today))
+    // In place before the scripts run, so the shelves below don't move.
+    .replace('<p class="section-sub" data-result-count></p>', `<p class="section-sub" data-result-count>${data.books.length} books from ${data.members.length} readers</p>`)
   return { status: 200, html }
 }
 

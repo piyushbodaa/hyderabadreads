@@ -4,6 +4,10 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### New link preview
+
+- Links shared on WhatsApp, Instagram and elsewhere now show the new logo, with a fresh stack of members' books and a mention of the meetups. The image has a new file name so apps fetch it again instead of reusing the old preview.
+
 ### Changes now go through pull requests
 
 - Every change to the site is now a pull request with a description of what changed and why, so anyone can follow along. Added a pull request template and this changelog.

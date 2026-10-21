@@ -26,6 +26,35 @@ You don't need a database: locally the site uses PGlite (Postgres in WebAssembly
 - Add a line to [`CHANGELOG.md`](CHANGELOG.md) under today's date. If you forget, a maintainer will do it when merging.
 - Schema changes go at the end of `MIGRATIONS` in `server/migrate.js`, as new statements that are safe to run twice. Never edit a migration that has already shipped.
 
+### Checks on every pull request
+
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs three checks on each pull request, and on `main` after each merge:
+
+- **Tests and build:** `npm test` and `npm run build`.
+- **Browser checks:** the built site in Chrome at phone and laptop sizes. The tests are in [`e2e/`](e2e):
+  - the shelves and search;
+  - a book's address and a member's shelf;
+  - the 404 page;
+  - the covers view;
+  - nothing scrolling sideways;
+  - signing in;
+  - opening the shelves offline.
+- **Lighthouse:** the home page and a book page, three runs each, held to the budgets in [`lighthouserc.json`](lighthouserc.json):
+  - accessibility and best practices at 95 or more, and SEO at 90 or more;
+  - layout shift under 0.1;
+  - at most 50 KB of scripts, 30 KB of styles and 300 KB of fonts;
+  - nothing loaded from other sites.
+
+  A performance score under 80 is only a warning, because shared CI machines vary too much for a hard limit. Each run keeps its reports for two weeks.
+
+You can run the browser checks and Lighthouse yourself. They use your installed Google Chrome and a throwaway database, so they never touch the one in `.data/`:
+
+```sh
+npm run build
+npm run test:browser
+npm run lighthouse
+```
+
 The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with no framework. The main pieces:
 
 | File | What it does |
@@ -53,6 +82,8 @@ The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with n
 | `src/lib/calendar-links.js`, `src/lib/meetup-time.js` | Add-to-calendar links, and meetup times as calendar times |
 | `src/lib/faq.js`, `server/photos.js` | Newcomers' questions (page and schema.org), and meetup photos |
 | `server/extras.js`, `src/stats.js`, `src/year.js` | The Wanted shelf, the club in numbers, and each member's year |
+| `public/sw.js`, `src/lib/pwa.js` | The service worker that keeps the shelves working offline, and its registration |
+| `e2e/`, `lighthouserc.json`, `scripts/serve-build.mjs` | The browser checks and Lighthouse budgets, and the server they run against |
 
 ## Licence
 

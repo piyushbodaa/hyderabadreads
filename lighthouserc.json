@@ -1,0 +1,29 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "node scripts/serve-build.mjs 4174",
+      "startServerReadyPattern": "ready on",
+      "url": ["http://127.0.0.1:4174/", "http://127.0.0.1:4174/book/dune-herbert"],
+      "numberOfRuns": 3
+    },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 0.95 }],
+        "categories:best-practices": ["error", { "minScore": 0.95 }],
+        "categories:seo": ["error", { "minScore": 0.9 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1, "aggregationMethod": "median-run" }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 51200 }],
+        "resource-summary:stylesheet:size": ["error", { "maxNumericValue": 30720 }],
+        "resource-summary:font:size": ["error", { "maxNumericValue": 307200 }],
+        "resource-summary:third-party:count": ["error", { "maxNumericValue": 0 }],
+        "categories:performance": ["warn", { "minScore": 0.8, "aggregationMethod": "median-run" }],
+        "largest-contentful-paint": ["warn", { "maxNumericValue": 4000, "aggregationMethod": "median-run" }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 600, "aggregationMethod": "median-run" }]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci"
+    }
+  }
+}

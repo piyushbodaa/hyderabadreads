@@ -40,7 +40,11 @@ npm run dev      # http://localhost:5173, with a local database in .data/
 npm test         # server, pages, feeds and analytics tests
 npm run build
 npm run preview  # the production build, same local database
+npm run test:browser  # after a build: the site in Chrome, at phone and laptop sizes
+npm run lighthouse    # after a build: Lighthouse, against the budgets in lighthouserc.json
 ```
+
+Every pull request runs the tests, the build, the browser checks and Lighthouse on GitHub Actions; see [CONTRIBUTING.md](CONTRIBUTING.md#checks-on-every-pull-request).
 
 No Postgres to install: locally the site uses [PGlite](https://pglite.dev), Postgres compiled to WebAssembly, and fills it with the starting shelves on first run. Delete `.data/` to start again from scratch.
 

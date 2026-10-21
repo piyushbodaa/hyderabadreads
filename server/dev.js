@@ -15,9 +15,10 @@ import { createInvite } from './auth.js'
 const root = new URL('../', import.meta.url)
 const HANDLERS = { '/api/page': pageResponse, '/api/feeds': feedResponse, '/api/og': ogResponse, '/api/app': appResponse }
 
-export function serverPlugin({ dataDir = fileURLToPath(new URL('.data/pglite', root)) } = {}) {
+// `memory: true` gives a fresh database that's gone when the server stops.
+export function serverPlugin({ dataDir = fileURLToPath(new URL('.data/pglite', root)), memory = false } = {}) {
   let db
-  const database = () => (db ??= import('./pglite.js').then((m) => m.localDatabase(dataDir)))
+  const database = () => (db ??= import('./pglite.js').then((m) => m.localDatabase(memory ? undefined : dataDir)))
   const rewrites = compileRewrites(JSON.parse(readFileSync(new URL('vercel.json', root), 'utf8')).rewrites ?? [])
 
   const devTemplates = (server) => async (url) => ({

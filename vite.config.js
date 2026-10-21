@@ -7,7 +7,9 @@ const page = (file) => fileURLToPath(new URL(file, import.meta.url))
 export default defineConfig({
   // The home page, books, shelves, feeds and link previews come from the
   // server (api/ on Vercel); locally the same handlers run inside Vite.
-  plugins: [serverPlugin()],
+  // HR_LOCAL_DB=memory swaps .data/ for a throwaway database (see
+  // scripts/serve-build.mjs).
+  plugins: [serverPlugin({ memory: process.env.HR_LOCAL_DB === 'memory' })],
   build: {
     rollupOptions: {
       input: {

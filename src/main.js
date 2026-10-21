@@ -583,8 +583,11 @@ function drawHeroBooks() {
   // Real books first; placeholders only fill in while shelves are still samples.
   const real = books.filter((b) => b.cover && !b.sample)
   const pool = (real.length >= HERO_SLOTS.length ? real : books.filter((b) => b.cover)).sort(() => rand() - 0.5)
+  // One book per member first, for variety; then more from the same shelves,
+  // so every slot has a book even while only a few members have added theirs.
   const picks = []
   for (const b of pool) if (picks.length < HERO_SLOTS.length && !picks.some((p) => p.owner === b.owner)) picks.push(b)
+  for (const b of pool) if (picks.length < HERO_SLOTS.length && !picks.includes(b)) picks.push(b)
   heroBooks.innerHTML = picks
     .map((b, i) => {
       const s = HERO_SLOTS[i]

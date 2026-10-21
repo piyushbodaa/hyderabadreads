@@ -23,11 +23,14 @@ export async function pageResponse(request, { db, template, notFound }) {
 }
 
 export async function feedResponse(request, { db }) {
-  const kind = new URL(request.url).searchParams.get('feed')
-  const out = feed(kind, await loadLibrary(db))
+  const url = new URL(request.url)
+  const kind = url.searchParams.get('feed')
+  // ?only=2026-10-24 gives just that day's meetup, for "Add to calendar".
+  const only = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('only') ?? '') ? url.searchParams.get('only') : null
+  const out = feed(kind, await loadLibrary(db), undefined, { only })
   if (!out) return new Response('Not found', { status: 404 })
   const headers = { 'Content-Type': out.type, 'Cache-Control': FEED_CACHE }
-  if (kind === 'ics') headers['Content-Disposition'] = 'inline; filename="hyderabad-reads-meetups.ics"'
+  if (kind === 'ics') headers['Content-Disposition'] = `${only ? 'attachment' : 'inline'}; filename="hyderabad-reads-${only ?? 'meetups'}.ics"`
   return new Response(out.body, { headers })
 }
 

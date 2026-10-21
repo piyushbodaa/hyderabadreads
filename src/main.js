@@ -11,7 +11,9 @@ import { Viewer } from './lib/viewer.js'
 import { startDust } from './lib/dust.js'
 import { escape } from './lib/render.js'
 import { looksSignedIn } from './lib/api.js'
-import { loadSession, onSession } from './lib/session.js'
+import { loadSession, onSession, nextMeetup } from './lib/session.js'
+import { mapsLink, googleEventLink, icsLink, subscribeLinks } from './lib/calendar-links.js'
+import { track } from './lib/track.js'
 
 // Signed-in members get straight to their own shelf from the header.
 if (looksSignedIn()) {
@@ -210,7 +212,8 @@ $('[data-readers]').addEventListener('click', (e) => {
   $('#library').scrollIntoView({ behavior: reduceMotion.matches ? 'auto' : 'smooth' })
 })
 
-// Meetups: a card for the next one, and a calendar of the month it falls in.
+// Meetups: a card for the next one, the month it falls in as a calendar on
+// bigger screens, and a list of upcoming dates on phones.
 function renderMeetups() {
   const pad = (n) => String(n).padStart(2, '0')
   const now = new Date()
@@ -219,7 +222,8 @@ function renderMeetups() {
   const all = [...meetups].sort((a, b) => a.date.localeCompare(b.date))
   if (!all.length) return ''
   const next = all.find((m) => m.date >= today && !m.cancelled)
-  const maps = (m) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${m.venue}, ${m.area}, Hyderabad`)}`
+  const maps = mapsLink
+  const subscribe = subscribeLinks()
 
   const card = next
     ? `<article class="next-meetup">
@@ -227,7 +231,12 @@ function renderMeetups() {
         <h3 class="next-meetup__date">${dateOf(next.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
         <p class="next-meetup__venue">${escape(next.venue)}${next.area ? ` <span>· ${escape(next.area)}</span>` : ''}</p>
         <p class="next-meetup__time">${escape(next.time)}</p>
+        ${next.note ? `<p class="next-meetup__note">${escape(next.note)}</p>` : ''}
         <a class="btn btn--primary" href="${maps(next)}" target="_blank" rel="noopener">Open in Maps</a>
+        <p class="next-meetup__add">
+          Add to <a href="${googleEventLink(next)}" target="_blank" rel="noopener" data-calendar-add>Google Calendar</a>
+          or <a href="${icsLink(next)}" data-calendar-add>Apple / Outlook</a>
+        </p>
       </article>`
     : `<article class="next-meetup">
         <p class="next-meetup__eyebrow">Next meetup</p>
@@ -263,15 +272,53 @@ function renderMeetups() {
   }
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((w) => `<span class="cal__dow" aria-hidden="true">${w}</span>`)
 
+  // Phones get the coming dates as a list, across months, without the past.
+  const upcoming = all.filter((m) => m.date >= today).slice(0, 8)
+  const list = upcoming
+    .map(
+      (m) => `
+      <li class="cal__item${m.cancelled ? ' is-cancelled' : ''}${m.date === next?.date ? ' is-next' : ''}">
+        <span class="cal__item-date">${dateOf(m.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+        <span class="cal__item-body">
+          ${m.cancelled ? `<s>${escape(m.venue)}</s> <span class="cal__time">Cancelled</span>` : `<a class="cal__venue" href="${maps(m)}" target="_blank" rel="noopener">${escape(m.venue)}</a>`}
+          <span class="cal__area">${escape([m.area, m.cancelled ? '' : m.time].filter(Boolean).join(' · '))}</span>
+        </span>
+      </li>`,
+    )
+    .join('')
+
   return `${card}
     <div class="cal">
       <h3 class="cal__month">${dateOf(`${month}-01`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</h3>
       <div class="cal__grid">${weekdays.join('')}${cells.join('')}</div>
+      <h3 class="cal__soon">Coming up</h3>
+      <ol class="cal__list">${list || '<li class="cal__item">More dates soon, on Instagram first.</li>'}</ol>
+      <p class="cal__subscribe">
+        Every meetup in your calendar, kept up to date:
+        <a href="${subscribe.google}" target="_blank" rel="noopener" data-calendar-add>Google Calendar</a> ·
+        <a href="${subscribe.webcal}" data-calendar-add>Apple / Outlook</a>
+      </p>
     </div>`
 }
 const meetupsHTML = renderMeetups()
 if (meetupsHTML) $('[data-meetups]').innerHTML = meetupsHTML
 else $('#calendar').hidden = true
+document.addEventListener('click', (e) => e.target.closest('[data-calendar-add]') && track('calendar_add'))
+
+// Under the hero: today's meetup if there is one, otherwise the next.
+{
+  const next = nextMeetup()
+  const line = $('[data-hero-next]')
+  if (next) {
+    const isToday = new Date(`${next.date}T00:00`).toDateString() === new Date().toDateString()
+    const when = new Date(`${next.date}T00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    line.innerHTML = isToday
+      ? `<span class="hero__pulse" aria-hidden="true"></span><strong>Today</strong>, ${escape(next.time)} at <strong>${escape(next.venue)}</strong>${next.area ? `, ${escape(next.area)}` : ''} · <a href="${mapsLink(next)}" target="_blank" rel="noopener">Directions</a>`
+      : `Next meetup · <strong>${when}</strong> · ${escape(next.venue)}${next.area ? `, ${escape(next.area)}` : ''} · ${escape(next.time)} · <a href="#calendar">Calendar</a>`
+    line.classList.toggle('is-today', isToday)
+    line.hidden = false
+  }
+}
 
 // Surprise me: scroll a random book into view, then take it off the shelf.
 document.querySelectorAll('[data-surprise]').forEach((btn) =>

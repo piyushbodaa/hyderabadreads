@@ -27,6 +27,8 @@ export class Bookcase {
     this.filter = () => true
     this.order = []
     this.rows = []
+    this.xs = []
+    this.current = null
     this.els = new Map()
     this.labels = new Map()
     this.shelves = []
@@ -40,6 +42,7 @@ export class Bookcase {
       wrap.setAttribute('role', 'listitem')
       const spine = document.createElement('button')
       spine.type = 'button'
+      spine.tabIndex = -1
       spine.className = `spine spine--${book.style} font-${book.font}`
       spine.style.cssText = bookVars(book)
       spine.dataset.id = book.id
@@ -58,8 +61,13 @@ export class Bookcase {
     })
     root.addEventListener('pointerover', (e) => this.hover(e))
     root.addEventListener('pointerleave', () => this.hover(null))
-    root.addEventListener('focusin', (e) => this.hover(e))
+    root.addEventListener('focusin', (e) => {
+      const spine = e.target.closest('.spine')
+      if (spine) this.setCurrent(this.els.get(spine.dataset.id).book)
+      this.hover(e)
+    })
     root.addEventListener('focusout', () => this.hover(null))
+    root.addEventListener('keydown', (e) => this.key(e))
 
     let width = root.clientWidth
     let timer
@@ -218,6 +226,7 @@ export class Bookcase {
     const visible = new Set()
     this.order = []
     this.rows = []
+    this.xs = []
     placed.forEach(({ book, x: bx, row: r }, i) => {
       const { wrap } = this.els.get(book.id)
       const y = r * rowH + plankTop - book.h * s
@@ -227,6 +236,7 @@ export class Bookcase {
       visible.add(book.id)
       this.order.push(book)
       this.rows.push(r)
+      this.xs.push(bx + (book.t * s) / 2)
     })
     for (const [id, { wrap }] of this.els) {
       if (!visible.has(id)) {
@@ -234,6 +244,8 @@ export class Bookcase {
         wrap.style.transitionDelay = '0ms'
       }
     }
+    // Keep the bookcase's single Tab stop on a book that's still on the shelves.
+    if (!this.current || !visible.has(this.current.id)) this.setCurrent(this.order[0])
 
     // Shelves (back-wall light + plank), one per row
     while (this.shelves.length < rows) {
@@ -323,5 +335,49 @@ export class Bookcase {
     this.tip.style.transform = `translate3d(${left}px, ${parseFloat(m[2]) - 18}px, 0) translateY(-100%)`
     this.tip.style.setProperty('--arrow', `${cx - left}px`)
     this.tip.classList.add('is-on')
+  }
+
+  // The whole bookcase is one Tab stop. The arrow keys run along the shelves:
+  // left and right through the books in order, up and down to the nearest book
+  // on the shelf above or below.
+  key(e) {
+    const spine = e.target.closest?.('.spine')
+    if (!spine || e.altKey || e.ctrlKey || e.metaKey) return
+    const i = this.order.findIndex((b) => b.id === spine.dataset.id)
+    if (i < 0) return
+    const moves = {
+      ArrowRight: () => this.order[i + 1],
+      ArrowLeft: () => this.order[i - 1],
+      ArrowDown: () => this.nearest(i, 1),
+      ArrowUp: () => this.nearest(i, -1),
+      Home: () => this.order[0],
+      End: () => this.order.at(-1),
+    }
+    if (!moves[e.key]) return
+    e.preventDefault()
+    const next = moves[e.key]()
+    if (!next) return
+    const target = this.els.get(next.id).spine
+    target.focus({ preventScroll: true })
+    target.scrollIntoView({ block: 'nearest', behavior: reduceMotion.matches ? 'auto' : 'smooth' })
+  }
+
+  // The book on the next shelf up or down whose middle is closest to this one's.
+  nearest(i, dir) {
+    const row = this.rows[i] + dir
+    let best = null
+    let gap = Infinity
+    this.order.forEach((book, j) => {
+      const d = Math.abs(this.xs[j] - this.xs[i])
+      if (this.rows[j] === row && d < gap) [best, gap] = [book, d]
+    })
+    return best
+  }
+
+  setCurrent(book) {
+    if (book === this.current) return
+    if (this.current) this.els.get(this.current.id).spine.tabIndex = -1
+    this.current = book ?? null
+    if (book) this.els.get(book.id).spine.tabIndex = 0
   }
 }

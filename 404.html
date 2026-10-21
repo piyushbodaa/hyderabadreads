@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Not on our shelves · Hyderabad Reads</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0f0c0a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script defer src="/analytics.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Hyderabad Reads, home">
+        <img class="brand__mark" src="/logo.svg" alt="" width="34" height="34" />
+        <span class="brand__name">Hyderabad Reads</span>
+      </a>
+      <nav class="topnav" aria-label="Sections">
+        <a href="/#library" class="topnav__cta">Browse the library</a>
+      </nav>
+    </header>
+
+    <main class="lost">
+      <!-- A shelf with one book missing and its neighbour leaning into the gap. -->
+      <div class="lost__shelf" aria-hidden="true">
+        <i style="--c: #7a1f2b; --h: 96px"></i>
+        <i style="--c: #1f4d3a; --h: 112px"></i>
+        <i style="--c: #d8c9a6; --h: 88px"></i>
+        <span class="lost__gap"></span>
+        <i class="lost__lean" style="--c: #1d2f52; --h: 104px"></i>
+        <i style="--c: #c9962b; --h: 92px"></i>
+      </div>
+      <p class="kicker">404 · Page not found</p>
+      <h1 class="lost__title">This page isn’t on our shelves.</h1>
+      <p class="lost__text">
+        It may have moved, or the link has a typo. Every book the club owns is still in the library, and the next
+        meetup is on the calendar.
+      </p>
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="/#library">Browse the library</a>
+        <a class="btn btn--ghost" href="/#calendar">See the next meetup</a>
+      </div>
+    </main>
+
+    <script type="module" src="/src/not-found.js"></script>
+  </body>
+</html>

@@ -122,7 +122,7 @@
         <div class="chips" role="group" aria-label="Show books by member" data-chips></div>
 
         <div class="bookcase-frame">
-          <div class="bookcase" role="list" aria-label="Books" data-bookcase>
+          <div class="bookcase" role="list" aria-label="Books" aria-describedby="shelf-keys" data-bookcase>
             <div class="bookcase__tip" aria-hidden="true" data-tip></div>
           </div>
           <p class="bookcase__empty" hidden data-empty></p>
@@ -133,7 +133,10 @@
             </p>
           </noscript>
         </div>
-        <p class="library__hint">Pick any book to take it off the shelf.</p>
+        <p class="library__hint">
+          Pick any book to take it off the shelf.
+          <span class="library__keys" id="shelf-keys">The arrow keys move along the shelves.</span>
+        </p>
       </section>
 
       <section id="calendar" class="meetups" aria-labelledby="calendar-title">

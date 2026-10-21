@@ -27,10 +27,13 @@ export async function appResponse(request, context) {
 
     const writing = !['GET', 'HEAD'].includes(method)
     if (writing && !sameOrigin(request)) throw new Problem(403, 'That request came from another site.')
-    if (writing && !(request.headers.get('content-type') ?? '').includes('application/json')) {
+    // POST and PATCH carry JSON. DELETE carries nothing, and like every write
+    // it still has to come from the site's own pages (the Origin check above).
+    const hasBody = method === 'POST' || method === 'PATCH'
+    if (hasBody && !(request.headers.get('content-type') ?? '').includes('application/json')) {
       throw new Problem(415, 'Send JSON.')
     }
-    const body = writing ? await request.json().catch(() => ({})) : {}
+    const body = hasBody ? await request.json().catch(() => ({})) : {}
     const member = await currentMember(db, request)
     const signedIn = () => {
       if (!member) throw new Problem(401, 'Sign in with your personal link first.')

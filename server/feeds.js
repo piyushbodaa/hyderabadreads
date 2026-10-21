@@ -11,9 +11,9 @@ const TYPES = {
   ics: 'text/calendar; charset=utf-8',
 }
 
-export function feed(kind, data, today = todayInIndia()) {
+export function feed(kind, data, today = todayInIndia(), options = {}) {
   const make = { llms, 'llms-full': llmsFull, json, sitemap, ics }[kind]
-  return make ? { type: TYPES[kind], body: make(data, today) } : null
+  return make ? { type: TYPES[kind], body: make(data, today, options) } : null
 }
 
 const bookUrl = (b) => `${SITE}/book/${b.id}`
@@ -145,12 +145,12 @@ ${urls.map((u) => `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod
 }
 
 // iCalendar (RFC 5545): CRLF line ends, long lines folded, commas escaped.
-function ics(data, today) {
+function ics(data, today, { only } = {}) {
   const text = (s) => String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1')
   const utc = (iso) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
   const stamp = `${today.replace(/-/g, '')}T000000Z`
   const events = data.meetups
-    .filter((m) => m.date >= today)
+    .filter((m) => (only ? m.date === only : m.date >= today))
     .map((m) => {
       const { start, end } = meetupClock(m.date, m.time)
       const when = start

@@ -4,6 +4,14 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Meetups: in your calendar, and run from the site
+
+- The hero shows the next meetup ("Next meetup · Sat 24 Oct · Chilaka, Jubilee Hills · 1 to 4 PM"). On the day, it's a green **Today** banner with directions.
+- Every meetup can go into **Google Calendar** or **Apple / Outlook**. You can also **subscribe** to the whole calendar, so new dates appear by themselves.
+- On phones, the calendar lists only the coming dates, across months, instead of starting with the ones that have passed.
+- Admins run the calendar at /admin: add dates one at a time or "every Saturday and Sunday in November", cancel or restore a meetup, and manage venues. They also set the club's details: the usual time, the fee shown to newcomers, how long a loan can run before it's flagged, and the Instagram link.
+- On laptops, books get a **WhatsApp** button next to "Ask to bring it". On phones, the share sheet already covers it.
+
 ### Borrowing, tracked from ask to return
 
 - **Ask to bring it** now records the request (when you're signed in), so the owner sees it on **My shelf** under "Bring to Sat 24 Oct". The ready-to-share message names the actual meetup too: "…to Saturday's meetup at Chilaka (24 Oct)?"

@@ -5,7 +5,10 @@ import { readerList, genreColour, meetups } from './model.js'
 import { bookVars, spineHTML, frontHTML, backHTML, escape } from './render.js'
 import { session, lend, mine, askedFor, borrowedByMe, lentOut, nextMeetup, meetupPhrase, shortDate } from './session.js'
 import { track } from './track.js'
+import { whatsappLink } from './api.js'
 
+const ICON_WHATSAPP =
+  '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5a7.5 7.5 0 00-6.5 11.2L2.5 17.5l3.9-1A7.5 7.5 0 1010 2.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /><path d="M7.4 6.6c.2-.4.6-.4.8 0l.6 1.3c.1.3 0 .5-.2.7l-.4.4c.4.9 1.2 1.7 2.1 2.1l.4-.4c.2-.2.5-.3.7-.2l1.3.6c.4.2.4.6 0 .8-.9.9-2.2.9-3.4.1A8 8 0 016.7 9.4c-.6-1.1-.4-2.1.7-2.8z" fill="currentColor" /></svg>'
 const ICON_ASK =
   '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.5h14v9H8l-4 3v-3H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>'
 
@@ -42,6 +45,7 @@ export class Viewer {
       else if (e.target.closest('[data-got]')) this.gotIt()
       else if (e.target.closest('[data-loan-action]')) this.loanAction(e.target.closest('[data-loan-action]'))
       else if (e.target.closest('[data-link]')) this.copyLink()
+      else if (e.target.closest('[data-whatsapp]')) track('ask_click')
     })
     // On the document, not the dialog: swapping books replaces the focused
     // button, and keys must keep working when focus drops to <body>.
@@ -308,6 +312,7 @@ export class Viewer {
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8.5 11.5a3.5 3.5 0 005 0l2.5-2.5a3.5 3.5 0 00-5-5l-1 1M11.5 8.5a3.5 3.5 0 00-5 0L4 11a3.5 3.5 0 005 5l1-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
         </button>`
     const button = (label, attrs, kind = 'primary') => `<button class="btn btn--${kind}" type="button" ${attrs}>${escape(label)}</button>`
+    const whatsapp = `<a class="btn btn--ghost btn--icon only-fine" href="${whatsappLink(this.messageFor(book))}" target="_blank" rel="noopener" aria-label="Send the message on WhatsApp" title="Send on WhatsApp" data-whatsapp>${ICON_WHATSAPP}</a>`
     const actions = (...items) => `<div class="info__actions">${items.join('')}${link}</div>`
     const note = (text, extra = '') => `<p class="info__status${extra}">${text}</p>`
     const owner = escape(book.owner)
@@ -319,7 +324,7 @@ export class Viewer {
       const label = book.onLoan ? `Ask ${book.owner} about it` : `Ask ${book.owner} to bring it`
       return (
         (this.gotMode ? note(`Borrowing this from ${owner}? <a href="/me">Sign in with your link</a> to mark it as borrowed.`, ' info__status--got') : '') +
-        actions(`<button class="btn btn--primary" type="button" data-ask>${ICON_ASK}${escape(label)}</button>`)
+        actions(`<button class="btn btn--primary" type="button" data-ask>${ICON_ASK}${escape(label)}</button>`, whatsapp)
       )
     }
     if (mine(book)) {
@@ -349,6 +354,7 @@ export class Viewer {
       actions(
         `<button class="btn btn--primary" type="button" data-request>${ICON_ASK}${escape(book.onLoan ? 'Ask to be next' : `Ask ${book.owner} to bring it`)}</button>`,
         this.gotMode || book.onLoan ? '' : button('I’ve got it', 'data-got', 'ghost'),
+        whatsapp,
       )
     )
   }
@@ -397,13 +403,16 @@ export class Viewer {
 
   // The message to the owner names the actual meetup, and goes through the
   // phone's share sheet (WhatsApp and the rest) or onto the clipboard.
-  async ask({ sent = false } = {}) {
-    const b = this.book
-    const when = meetupPhrase(nextMeetup())
+  messageFor(b) {
     const text = b.onLoan
       ? `Hi ${b.owner}! I’d love to borrow “${b.title}” when it’s back. Could you bring it to a meetup after that? 📚`
-      : `Hi ${b.owner}! Could you bring “${b.title}” by ${b.author} to ${when}? 📚`
-    const full = `${text}\n${this.link(b)}`
+      : `Hi ${b.owner}! Could you bring “${b.title}” by ${b.author} to ${meetupPhrase(nextMeetup())}? 📚`
+    return `${text}\n${this.link(b)}`
+  }
+
+  async ask({ sent = false } = {}) {
+    const b = this.book
+    const full = this.messageFor(b)
     if (!sent) track('ask_click')
     if (navigator.share && matchMedia('(pointer: coarse)').matches) {
       try {

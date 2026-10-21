@@ -49,6 +49,8 @@ The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with n
 | `server/loans.js` | Requests, loans, returns, and the weekly digest's data |
 | `src/lib/session.js` | Who's signed in on the home page, and the lending they see |
 | `src/bookplates.js`, `src/digest.js` | Printable QR bookplates, and the weekly WhatsApp digest |
+| `server/calendar.js` | Admins' calendar, venues and club details |
+| `src/lib/calendar-links.js`, `src/lib/meetup-time.js` | Add-to-calendar links, and meetup times as calendar times |
 
 ## Licence
 

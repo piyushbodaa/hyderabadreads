@@ -6,6 +6,7 @@ import { searchBooks, fetchCover } from './openlibrary.js'
 import { mediaResponse } from './media.js'
 import { Problem, myShelf, addBook, updateBook, removeBook, shelfAction, adminData, adminAction } from './members.js'
 import { lendingFor, loanAction, digest } from './loans.js'
+import { CALENDAR_ACTIONS, adminCalendar, calendarAction } from './calendar.js'
 
 export function json(data, status = 200, cookies = []) {
   const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
@@ -69,8 +70,12 @@ export async function appResponse(request, context) {
         return json(await myShelf(db, member))
       case 'GET admin':
         admin()
-        return json(await adminData(db))
+        return json({ ...(await adminData(db)), ...(await adminCalendar(db)) })
       case 'POST admin':
+        if (CALENDAR_ACTIONS.has(body.action)) {
+          admin()
+          return json(await calendarAction(db, body))
+        }
         return json(await adminAction(db, admin(), body, { origin: url.origin }))
       default:
         throw new Problem(404, 'No such address.')

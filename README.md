@@ -24,8 +24,11 @@ Dates and venues live in [`src/data/meetups.js`](src/data/meetups.js), one line 
 npm install
 npm run dev      # http://localhost:5173
 npm run covers   # fetch covers for new books
+npm test         # analytics loader tests
 npm run build
 ```
+
+Visits are counted with Google Analytics on the live site only; see [ANALYTICS.md](ANALYTICS.md).
 
 ## Contributing
 

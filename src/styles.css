@@ -922,6 +922,17 @@ kbd {
   opacity: 0;
 }
 
+/* A sample shelf: a paler plate with a hollow dot. */
+.plate.is-sample {
+  background: linear-gradient(#e7dcc3, #bcab88 52%, #9d8a62);
+  color: #4a3a22;
+}
+
+.plate.is-sample .plate__dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px #6b5a3a;
+}
+
 .decor {
   position: absolute;
   top: 0;

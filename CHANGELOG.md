@@ -20,7 +20,7 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 - Links pasted into WhatsApp or Instagram show that book's cover with "On Piyush's shelf" (or the member's covers fanned out), instead of the same site-wide picture for everything.
 - Search engines and anyone without JavaScript get the whole catalogue as plain HTML, plus schema.org data for each book and upcoming meetup.
 - New: [/meetups.ics](https://hyderabadreads.fun/meetups.ics), a calendar feed to subscribe to.
-- The starting shelves were placeholders, so they're marked as **samples**. Their plates read "· SAMPLE", the books sit slightly dimmer, and opening one says it's a placeholder instead of offering "Ask to bring it".
+- The starting shelves were placeholders, so they're marked as **samples**. Their name plates are paler with a hollow dot, the books sit slightly dimmer, and opening one says it's a placeholder instead of offering "Ask to bring it".
 - Google Analytics never sees member names: shelf addresses are counted together.
 
 ### A proper 404 page, security headers and keyboard shelves

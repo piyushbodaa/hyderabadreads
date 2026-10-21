@@ -3,7 +3,7 @@
 // Books are absolutely positioned with transforms, so every move is a GPU
 // transition rather than a reflow.
 
-import { books, readerList, genreColour, fitSpines, SPINE_FONTS, MAX_SPINE_HEIGHT } from './model.js'
+import { books, genreColour, hash, fitSpines, SPINE_FONTS, MAX_SPINE_HEIGHT } from './model.js'
 import { GENRES } from '../data/library.js'
 import { bookVars, spineHTML, escape } from './render.js'
 import { DECOR } from './decor.js'
@@ -23,7 +23,7 @@ export class Bookcase {
     this.tip = tip
     this.onOpen = onOpen
     this.onLayout = onLayout
-    this.arrange = 'reader'
+    this.arrange = 'genre'
     this.filter = () => true
     this.order = []
     this.rows = []
@@ -129,40 +129,31 @@ export class Bookcase {
       return map
     }
 
-    if (this.arrange === 'genre') {
-      const known = Object.keys(GENRES)
-      const map = by((b) => b.genre)
+    // Writers are shelved like a library: A to Z by surname, a letter per section.
+    if (this.arrange === 'writer') {
+      const sorted = [...visible].sort((a, b) => a.surname.localeCompare(b.surname, 'en', { sensitivity: 'base' }) || a.title.localeCompare(b.title))
+      const map = new Map()
+      for (const b of sorted) {
+        const letter = b.surname.normalize('NFKD')[0].toUpperCase()
+        if (!map.has(letter)) map.set(letter, [])
+        map.get(letter).push(b)
+      }
+      return [...map].map(([letter, list]) => ({ key: letter, label: letter, colour: '#d9b46a', books: list }))
+    }
+
+    // Biggest language first, so English leads and the rest follow.
+    if (this.arrange === 'language') {
+      const map = by((b) => b.language)
       return [...map.keys()]
-        .sort((a, b) => (known.indexOf(a) + 1 || 99) - (known.indexOf(b) + 1 || 99) || a.localeCompare(b))
-        .map((g) => ({ key: g, label: g, colour: genreColour(g), books: map.get(g) }))
+        .sort((a, b) => map.get(b).length - map.get(a).length || a.localeCompare(b))
+        .map((l) => ({ key: l, label: l, colour: `hsl(${hash(l) % 360} 45% 62%)`, books: map.get(l) }))
     }
 
-    if (this.arrange === 'decade') {
-      const map = by((b) => (b.year ? Math.floor(b.year / 10) * 10 : 'Undated'))
-      return [...map.keys()]
-        .sort((a, b) => (a === 'Undated') - (b === 'Undated') || a - b)
-        .map((d) => ({
-          key: String(d),
-          label: d === 'Undated' ? d : `${d}s`,
-          colour: '#d9b46a',
-          books: map.get(d).sort((a, b) => (a.year ?? 0) - (b.year ?? 0)),
-        }))
-    }
-
-    if (this.arrange === 'colour') {
-      // Chromatic spines run red → violet, then the neutrals light → dark.
-      const chroma = (b) => b.hsl.s > 0.2 && b.hsl.l > 0.1 && b.hsl.l < 0.92
-      const hue = (b) => (b.hsl.h + 345) % 360
-      const sorted = [...visible].sort((a, b) => {
-        if (chroma(a) !== chroma(b)) return chroma(a) ? -1 : 1
-        return chroma(a) ? hue(a) - hue(b) : b.hsl.l - a.hsl.l
-      })
-      return sorted.length ? [{ key: 'all', label: null, books: sorted }] : []
-    }
-
-    return readerList
-      .map((r) => ({ key: r.name, label: r.name, colour: `hsl(${r.hue} 55% 70%)`, books: r.books.filter(this.filter) }))
-      .filter((g) => g.books.length)
+    const known = Object.keys(GENRES)
+    const map = by((b) => b.genre)
+    return [...map.keys()]
+      .sort((a, b) => (known.indexOf(a) + 1 || 99) - (known.indexOf(b) + 1 || 99) || a.localeCompare(b))
+      .map((g) => ({ key: g, label: g, colour: genreColour(g), books: map.get(g) }))
   }
 
   layout({ cascade = false } = {}) {
@@ -249,12 +240,11 @@ export class Bookcase {
       if (!el) {
         el = document.createElement('div')
         el.className = 'plate is-new'
-        el.innerHTML = `<span class="plate__dot"></span><span class="plate__text">${escape(this.labelText(group))}</span><span class="plate__count"></span>`
+        el.innerHTML = `<span class="plate__dot"></span><span class="plate__text">${escape(group.label.toUpperCase())}</span>`
         this.root.append(el)
         this.labels.set(key, el)
         requestAnimationFrame(() => el.classList.remove('is-new'))
       }
-      el.querySelector('.plate__count').textContent = group.books.length
       el.style.setProperty('--dot', group.colour)
       el.style.transform = `translate3d(${lx + w / 2}px, ${r * rowH + plankTop + (PLANK * s - 17) / 2}px, 0) translateX(-50%)`
       el.classList.remove('is-gone')
@@ -266,7 +256,7 @@ export class Bookcase {
     this.decor = []
     rowEnds.slice(0, rows).forEach((end, r) => {
       const space = right - end - 18
-      const item = DECOR[(r + ['reader', 'genre', 'colour', 'decade'].indexOf(this.arrange)) % DECOR.length]
+      const item = DECOR[(r + ['genre', 'language', 'writer'].indexOf(this.arrange)) % DECOR.length]
       if (space < (item.w + 28) * s) return
       const el = document.createElement('div')
       el.className = `decor decor--${item.name}`
@@ -283,15 +273,10 @@ export class Bookcase {
     this.onLayout?.(this.order.length)
   }
 
-  // Decades keep their lowercase "s" (1960s, not 1960S).
-  labelText(group) {
-    return this.arrange === 'decade' ? group.label : group.label.toUpperCase()
-  }
-
   labelWidth(group) {
     this.measure.font = LABEL_FONT
-    const text = this.labelText(group)
-    return Math.ceil(this.measure.measureText(text).width + text.length * 1.4 + 52)
+    const text = group.label.toUpperCase()
+    return Math.ceil(this.measure.measureText(text).width + text.length * 1.4 + 34)
   }
 
   hover(e) {

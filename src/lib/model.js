@@ -58,6 +58,7 @@ for (const reader of readers) {
       author: raw.author,
       surname: raw.author.trim().split(/\s+/).pop(),
       genre: raw.genre ?? 'Other',
+      language: raw.language ?? 'English',
       blurb: raw.blurb ?? '',
       note: raw.note ?? '',
       onLoanTo: raw.onLoanTo ?? null,
@@ -78,7 +79,6 @@ for (const reader of readers) {
       t,
       fs,
       afs: clamp(t * 0.2, 6.5, 9.5),
-      hsl: toHsl(base),
       seed: hash(slug),
     })
   }
@@ -214,15 +214,3 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05)
 }
 
-function toHsl(hex) {
-  const [r, g, b] = rgb(hex).map((v) => v / 255)
-  const max = Math.max(r, g, b)
-  const min = Math.min(r, g, b)
-  const l = (max + min) / 2
-  const d = max - min
-  if (!d) return { h: 0, s: 0, l }
-  const s = d / (1 - Math.abs(2 * l - 1))
-  let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
-  h = (h * 60 + 360) % 360
-  return { h, s, l }
-}

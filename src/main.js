@@ -55,7 +55,7 @@ new IntersectionObserver(
 
 // Search
 const fold = (text) => text.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
-const haystacks = new Map(books.map((b) => [b, fold([b.title, b.author, b.owner, b.genre, b.year].join(' '))]))
+const haystacks = new Map(books.map((b) => [b, fold([b.title, b.author, b.owner, b.genre, b.language, b.year].join(' '))]))
 function applyFilter() {
   const terms = fold(state.q).split(/\s+/).filter(Boolean)
   bookcase.setFilter((b) => (!state.reader || b.owner === state.reader) && terms.every((t) => haystacks.get(b).includes(t)))

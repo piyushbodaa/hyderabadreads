@@ -823,11 +823,6 @@ kbd {
   box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35);
 }
 
-.plate__count {
-  opacity: 0.55;
-  letter-spacing: 0.04em;
-}
-
 .plate.is-new,
 .plate.is-gone {
   opacity: 0;

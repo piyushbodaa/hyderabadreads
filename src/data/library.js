@@ -8,6 +8,7 @@
 //  Only `title` and `author` are required. Everything else is optional:
 //
 //    genre     One of the genres listed in GENRES below (or any new word).
+//    language  Only if it isn't in English: 'Telugu', 'Hindi', 'Urdu'...
 //    blurb     A line or two about the book, shown when someone opens it.
 //    note      Your own note: "Loved it", "margins full of scribbles"...
 //    onLoanTo  Name of whoever currently has it. Remove the line when it's back.

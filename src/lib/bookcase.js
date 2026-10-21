@@ -117,8 +117,9 @@ export class Bookcase {
     })
   }
 
-  groups() {
-    const visible = books.filter(this.filter)
+  // The shelves for an arrangement. The filter chips use it too, so a chip and
+  // its shelf always agree on which books belong together.
+  groups(mode = this.arrange, visible = books.filter(this.filter)) {
     const by = (keyOf) => {
       const map = new Map()
       for (const b of visible) {
@@ -130,7 +131,7 @@ export class Bookcase {
     }
 
     // Writers are shelved like a library: A to Z by surname, a letter per section.
-    if (this.arrange === 'writer') {
+    if (mode === 'writer') {
       const sorted = [...visible].sort((a, b) => a.surname.localeCompare(b.surname, 'en', { sensitivity: 'base' }) || a.title.localeCompare(b.title))
       const map = new Map()
       for (const b of sorted) {
@@ -148,14 +149,14 @@ export class Bookcase {
     }
 
     // Biggest language first, so English leads and the rest follow.
-    if (this.arrange === 'language') {
+    if (mode === 'language') {
       const map = by((b) => b.language)
       return [...map.keys()]
         .sort((a, b) => map.get(b).length - map.get(a).length || a.localeCompare(b))
         .map((l) => ({ key: l, label: l, colour: `hsl(${hash(l) % 360} 45% 62%)`, books: map.get(l) }))
     }
 
-    if (this.arrange === 'genre') {
+    if (mode === 'genre') {
       const known = Object.keys(GENRES)
       const map = by((b) => b.genre)
       return [...map.keys()]
@@ -164,7 +165,7 @@ export class Bookcase {
     }
 
     return readerList
-      .map((r) => ({ key: r.name, label: r.name, colour: `hsl(${r.hue} 55% 70%)`, books: r.books.filter(this.filter) }))
+      .map((r) => ({ key: r.name, label: r.name, colour: `hsl(${r.hue} 55% 70%)`, books: visible.filter((b) => b.owner === r.name) }))
       .filter((g) => g.books.length)
   }
 

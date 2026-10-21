@@ -210,8 +210,8 @@ kbd {
 .topbar.is-scrolled {
   background: rgb(15 12 10 / 0.74);
   border-color: var(--line);
-  backdrop-filter: blur(14px) saturate(1.2);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
 }
 
 .brand {
@@ -650,7 +650,7 @@ kbd {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: hsl(var(--hue) 55% 70%);
+  background: var(--dot);
 }
 
 .chip span {
@@ -1158,8 +1158,8 @@ kbd {
   background:
     radial-gradient(ellipse 55% 65% at 32% 48%, rgb(70 44 22 / 0.55), transparent 72%),
     rgb(10 8 6 / 0.88);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   animation: fade-in 0.5s ease both;
 }
 
@@ -1598,8 +1598,8 @@ kbd {
   background: rgb(30 22 16 / 0.6);
   color: var(--text);
   cursor: pointer;
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   transition:
     background 0.2s,
     transform 0.2s var(--ease-out),
@@ -2023,6 +2023,30 @@ kbd {
   color: var(--text-2);
 }
 
+.footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  margin-bottom: 10px;
+}
+
+.footer__links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+}
+
+.footer__links a:hover {
+  color: var(--text);
+}
+
+.footer__links svg {
+  width: 17px;
+  height: 17px;
+}
+
 .footer__covers {
   margin-top: 6px;
   color: var(--muted-2);
@@ -2186,12 +2210,14 @@ kbd {
     padding: 8px 12px;
     white-space: nowrap;
   }
-}
 
-/* The smallest phones drop the header Instagram icon; the footer still has it. */
-@media (max-width: 380px) {
-  .topnav .topnav__icon {
+  /* "Add books" on phones, so the Instagram and GitHub icons fit beside it. */
+  .topnav__your {
     display: none;
+  }
+
+  .topnav .topnav__icon {
+    padding: 6px;
   }
 
   .hero {
@@ -2237,6 +2263,18 @@ kbd {
 
   .bookcase__empty {
     inset: 22px var(--frame-x) 28px;
+  }
+}
+
+/* The smallest phones drop the header icons (the footer still has both) and
+   get the full "Add your books" back. */
+@media (max-width: 380px) {
+  .topnav .topnav__icon {
+    display: none;
+  }
+
+  .topnav__your {
+    display: inline;
   }
 }
 

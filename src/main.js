@@ -14,7 +14,9 @@ import { meetups, VENUES, TIME, INSTAGRAM } from './data/meetups.js'
 
 const $ = (sel) => document.querySelector(sel)
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
-const state = { q: '', reader: null }
+// `facet` is the chip picked under the search box: one shelf of the current
+// arrangement (a member, genre, language or writer letter), or null for all.
+const state = { q: '', facet: null }
 
 // Toast
 const toastEl = $('[data-toast]')
@@ -37,7 +39,7 @@ const bookcase = new Bookcase($('[data-bookcase]'), {
     countEl.textContent =
       shown === total
         ? `${total} books from ${readerList.length} readers`
-        : `Showing ${shown} of ${total}${state.q ? ` for “${state.q}”` : ''}${state.reader ? ` from ${state.reader}` : ''}`
+        : `Showing ${shown} of ${total}${state.q ? ` for “${state.q}”` : ''}${state.facet ? ` ${FACETS[bookcase.arrange].phrase(state.facet.key)}` : ''}`
     emptyEl.hidden = shown > 0
     if (!shown) emptyEl.innerHTML = `Nobody has listed <strong>${escape(state.q || 'that')}</strong> yet. Ask in the group: someone might have it.`
   },
@@ -58,8 +60,7 @@ new IntersectionObserver(
 const fold = (text) => text.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
 const haystacks = new Map(books.map((b) => [b, fold([b.title, b.author, b.owner, b.genre, b.language, b.year].join(' '))]))
 function applyFilter() {
-  const terms = fold(state.q).split(/\s+/).filter(Boolean)
-  bookcase.setFilter((b) => (!state.reader || b.owner === state.reader) && terms.every((t) => haystacks.get(b).includes(t)))
+  bookcase.setFilter(currentFilter())
 }
 
 const search = $('[data-search]')
@@ -92,12 +93,18 @@ function placePill() {
   pill.style.width = `${active.offsetWidth}px`
   pill.style.transform = `translateX(${active.offsetLeft}px)`
 }
+function setArrange(mode) {
+  segmented.querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.value === mode)))
+  placePill()
+  // A chip from the old arrangement means nothing in the new one.
+  state.facet = null
+  bookcase.setFilter(currentFilter())
+  bookcase.setArrange(mode)
+  renderChips()
+}
 segmented.addEventListener('click', (e) => {
   const btn = e.target.closest('button')
-  if (!btn) return
-  segmented.querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', String(b === btn)))
-  placePill()
-  bookcase.setArrange(btn.dataset.value)
+  if (btn && btn.dataset.value !== bookcase.arrange) setArrange(btn.dataset.value)
 })
 segmented.addEventListener('keydown', (e) => {
   if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return
@@ -110,24 +117,43 @@ segmented.addEventListener('keydown', (e) => {
 new ResizeObserver(placePill).observe(segmented)
 document.fonts.ready.then(placePill)
 
-// Reader chips
+// Chips: one per shelf of the current arrangement, so they follow the
+// Member / Genre / Language / Writer switch.
+const FACETS = {
+  reader: { noun: 'member', phrase: (k) => `from ${k}’s shelf` },
+  genre: { noun: 'genre', phrase: (k) => `in ${k}` },
+  language: { noun: 'language', phrase: (k) => `in ${k}` },
+  writer: { noun: 'writer', phrase: (k) => `by writers under ${k}` },
+}
 const chips = $('[data-chips]')
-chips.innerHTML = [
-  `<button type="button" class="chip" aria-pressed="true" data-reader="">All <span>${books.length}</span></button>`,
-  ...readerList.map(
-    (r) =>
-      `<button type="button" class="chip" aria-pressed="false" data-reader="${escape(r.name)}" style="--hue:${r.hue}"><i></i>${escape(r.name)} <span>${r.books.length}</span></button>`,
-  ),
-].join('')
-function selectReader(name) {
-  state.reader = name || null
-  chips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.reader === (name || ''))))
+let facetGroups = []
+function renderChips() {
+  facetGroups = bookcase.groups(bookcase.arrange, books)
+  chips.setAttribute('aria-label', `Show books by ${FACETS[bookcase.arrange].noun}`)
+  chips.innerHTML = [
+    `<button type="button" class="chip" aria-pressed="${!state.facet}" data-key="">All <span>${books.length}</span></button>`,
+    ...facetGroups.map(
+      (g) =>
+        `<button type="button" class="chip" aria-pressed="${state.facet?.key === g.key}" data-key="${escape(g.key)}" style="--dot:${g.colour}"><i></i>${escape(g.key)} <span>${g.books.length}</span></button>`,
+    ),
+  ].join('')
+  chips.scrollLeft = 0
+}
+function currentFilter() {
+  const terms = fold(state.q).split(/\s+/).filter(Boolean)
+  return (b) => (!state.facet || state.facet.ids.has(b.id)) && terms.every((t) => haystacks.get(b).includes(t))
+}
+function selectFacet(key) {
+  const group = key ? facetGroups.find((g) => g.key === key) : null
+  state.facet = group ? { key: group.key, ids: new Set(group.books.map((b) => b.id)) } : null
+  chips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.key === (state.facet?.key ?? ''))))
   applyFilter()
 }
 chips.addEventListener('click', (e) => {
   const chip = e.target.closest('.chip')
-  if (chip) selectReader(chip.dataset.reader === state.reader ? '' : chip.dataset.reader)
+  if (chip) selectFacet(chip.dataset.key === state.facet?.key ? '' : chip.dataset.key)
 })
+renderChips()
 
 // Readers section
 $('[data-readers]').innerHTML = readerList
@@ -150,7 +176,8 @@ $('[data-readers]').innerHTML = readerList
 $('[data-readers]').addEventListener('click', (e) => {
   const card = e.target.closest('.reader')
   if (!card) return
-  selectReader(card.dataset.reader)
+  if (bookcase.arrange !== 'reader') setArrange('reader')
+  selectFacet(card.dataset.reader)
   $('#library').scrollIntoView({ behavior: reduceMotion.matches ? 'auto' : 'smooth' })
 })
 
@@ -213,13 +240,15 @@ function renderMeetups() {
 }
 const meetupsHTML = renderMeetups()
 if (meetupsHTML) $('[data-meetups]').innerHTML = meetupsHTML
-else $('#meetups').hidden = true
+else $('#calendar').hidden = true
 
 // Surprise me: scroll a random book into view, then take it off the shelf.
 document.querySelectorAll('[data-surprise]').forEach((btn) =>
   btn.addEventListener('click', async () => {
-    const pool = bookcase.order.length ? bookcase.order : books
-    const book = pool[Math.floor(Math.random() * pool.length)]
+    // With nothing on the shelves (a search with no hits), any book will do,
+    // opened straight up since its spine is hidden.
+    if (!bookcase.order.length) return viewer.open(books[Math.floor(Math.random() * books.length)], null)
+    const book = bookcase.order[Math.floor(Math.random() * bookcase.order.length)]
     const spine = bookcase.spineOf(book.id)
     const r = spine.getBoundingClientRect()
     if (r.top < 80 || r.bottom > innerHeight - 20) {

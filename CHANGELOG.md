@@ -4,6 +4,13 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### A proper 404 page, security headers and keyboard shelves
+
+- Addresses that don't exist get a "This page isn't on our shelves" page with links back to the library and the calendar, instead of Vercel's bare "NOT_FOUND".
+- `www.hyderabadreads.fun` now redirects to `hyderabadreads.fun` on the home page too. Other pages already did.
+- The site sends standard security headers: a content security policy, no framing by other sites, no MIME sniffing, a strict referrer policy, and no camera, microphone or location access.
+- The bookcase takes one press of Tab instead of about 125. The arrow keys move along the shelves, up and down jump to the shelf above or below, and Home and End go to the first and last book.
+
 ### Visit counts with Google Analytics
 
 - The live site counts page visits with Google Analytics, set up privately: only on hyderabadreads.fun, with addresses stripped of anything after `?` or `#`, no member details, and Google Signals and ad personalisation off. The footer says so. Details in [ANALYTICS.md](ANALYTICS.md).

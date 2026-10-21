@@ -142,7 +142,7 @@ export async function shelfImage(db, member, books) {
   const picks = books.filter((b) => b.cover).slice(0, 5)
   const covers = (await Promise.all(picks.map((b) => coverImage(db, b.cover, 290)))).filter(Boolean)
   const genres = [...new Set(books.map((b) => b.genre))].slice(0, 2).join(', ')
-  const count = `${books.length} ${books.length === 1 ? 'book' : 'books'}${genres ? ` · ${genres}` : ''}`
+  const count = books.length ? `${books.length} ${books.length === 1 ? 'book' : 'books'}${genres ? ` · ${genres}` : ''}` : 'Empty for now. Send a photo of your books to Piyush and they’ll be up here.'
   // Up to five covers fanned out like a hand of cards: overlapping, each turned
   // a little more, the outer ones dropped slightly lower.
   const FAN_W = 460

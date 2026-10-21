@@ -19,6 +19,7 @@ if (params.size) history.replaceState(null, '', '/me')
 let me = null
 let books = []
 let lending = null
+let wishes = []
 let results = []
 let searchTimer
 let searchSeq = 0
@@ -31,6 +32,7 @@ async function start() {
     me = data.member
     books = data.books ?? []
     lending = data.lending ?? null
+    wishes = data.wishes ?? []
   } catch (err) {
     desk.innerHTML = `<div class="desk__head"><p class="kicker">My shelf</p><h1 class="desk__title">Something went wrong</h1>
       <p class="desk__lede">${escape(err.message)}</p></div>`
@@ -51,6 +53,7 @@ async function start() {
         <a href="/shelf/${escape(me.slug)}">See your shelf</a>
         <a href="/bookplates">Print bookplates</a>
         <a href="/digest">This week at the club</a>
+        <a href="/year">Your year</a>
         <button type="button" class="linkish" data-copy-shelf>Copy a link to it</button>
       </p>
     </div>
@@ -82,10 +85,16 @@ async function start() {
     <section class="panel" aria-labelledby="mine-title">
       <h2 id="mine-title" class="panel__title" data-count></h2>
       <ul class="mybooks" data-books></ul>
+    </section>
+    <section class="panel" aria-labelledby="wanted-title">
+      <h2 id="wanted-title" class="panel__title">Looking for</h2>
+      <p class="panel__lede">Books you’d like to read. They sit on the Wanted shelf, where anyone who has one can say so. Search above and tap <em>Want</em>.</p>
+      <ul class="lends" data-wishes></ul>
     </section>`
   renderSamples()
   renderLending()
   renderBooks()
+  renderWishes()
   wire()
   if (welcome) toast(`You’re signed in on this ${matchMedia('(pointer: coarse)').matches ? 'phone' : 'browser'}.`)
 }
@@ -188,7 +197,10 @@ function renderResults(message) {
           <p class="result__title">${escape(r.title)}</p>
           <p class="result__author">${escape(r.author)}${r.year ? ` · ${r.year}` : ''}</p>
         </div>
-        <button type="button" class="btn btn--ghost result__add" data-pick="${i}">Add</button>
+        <span class="result__buttons">
+          <button type="button" class="btn btn--ghost result__add" data-pick="${i}" title="I have this, add it to my shelf">Add</button>
+          <button type="button" class="btn btn--ghost result__add" data-want="${i}" title="I’m looking for this">Want</button>
+        </span>
       </article>`,
     )
     .join('')
@@ -215,6 +227,8 @@ function wire() {
       return toast((await copyText(link)) ? 'Link to your shelf copied.' : link)
     }
     if (t.matches('[data-pick]')) return openAddForm(t.closest('[data-result]'), results[Number(t.dataset.pick)])
+    if (t.matches('[data-want]')) return want(t, results[Number(t.dataset.want)])
+    if (t.matches('[data-unwant]')) return unwant(t)
     if (t.matches('[data-cancel-add]')) return t.closest('.addform').remove()
     if (t.matches('[data-samples-action]')) return samplesAction(t)
     if (t.matches('[data-loan-action]')) return loanAction(t, { action: t.dataset.loanAction, loan: Number(t.dataset.loan) })
@@ -478,6 +492,43 @@ function lendForm(item, book) {
       <button class="btn btn--ghost" type="button" data-keep>Cancel</button>
     </form>`
   item.querySelector('select').focus()
+}
+
+function renderWishes() {
+  desk.querySelector('[data-wishes]').innerHTML = wishes.length
+    ? wishes
+        .map(
+          (w) => `<li class="lend"><p class="lend__text"><strong>${escape(w.title)}</strong>${w.author ? ` by ${escape(w.author)}` : ''}</p>
+            <div class="lend__actions"><button type="button" class="btn btn--ghost" data-unwant="${w.id}">Got it, remove</button></div></li>`,
+        )
+        .join('')
+    : '<li class="mybooks__empty">Nothing yet.</li>'
+}
+
+async function want(button, pick) {
+  button.disabled = true
+  try {
+    const data = await api('/api/wishes', { method: 'POST', body: { title: pick.title, author: pick.author, olKey: pick.olKey, coverId: pick.coverId } })
+    wishes = data.wishes
+    renderWishes()
+    toast(`${pick.title} is on the Wanted shelf.`)
+  } catch (err) {
+    toast(err.message)
+  } finally {
+    button.disabled = false
+  }
+}
+
+async function unwant(button) {
+  button.disabled = true
+  try {
+    wishes = (await api(`/api/wishes?id=${encodeURIComponent(button.dataset.unwant)}`, { method: 'DELETE' })).wishes
+    renderWishes()
+    toast('Taken off the Wanted shelf.')
+  } catch (err) {
+    button.disabled = false
+    toast(err.message)
+  }
 }
 
 function htmlToNode(html) {

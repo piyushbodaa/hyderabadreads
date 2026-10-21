@@ -7,6 +7,8 @@ import { mediaResponse } from './media.js'
 import { Problem, myShelf, addBook, updateBook, removeBook, shelfAction, adminData, adminAction } from './members.js'
 import { lendingFor, loanAction, digest } from './loans.js'
 import { CALENDAR_ACTIONS, adminCalendar, calendarAction } from './calendar.js'
+import { addWish, removeWish, myWishes, clubStats, yearFor } from './extras.js'
+import { yearImage } from './og.js'
 
 export function json(data, status = 200, cookies = []) {
   const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
@@ -47,7 +49,26 @@ export async function appResponse(request, context) {
 
     switch (`${method} ${route}`) {
       case 'GET me':
-        return json(member ? { ...(await myShelf(db, member)), lending: await lendingFor(db, member) } : { member: null })
+        return json(member ? { ...(await myShelf(db, member)), lending: await lendingFor(db, member), wishes: await myWishes(db, member) } : { member: null })
+      case 'POST wishes':
+        return json({ wish: await addWish(db, signedIn(), body), wishes: await myWishes(db, member) }, 201)
+      case 'DELETE wishes':
+        await removeWish(db, signedIn(), url.searchParams.get('id'))
+        return json({ wishes: await myWishes(db, member) })
+      case 'GET stats':
+        return json(await clubStats(db, member))
+      case 'GET year':
+        return json(await yearFor(db, signedIn(), url.searchParams.get('y')))
+      case 'GET year-card': {
+        const y = await yearFor(db, signedIn(), url.searchParams.get('y'))
+        return new Response(await yearImage(y), {
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Cache-Control': 'private, no-store',
+            'Content-Disposition': `inline; filename="hyderabad-reads-${y.year}.jpg"`,
+          },
+        })
+      }
       case 'POST loans': {
         const result = await loanAction(db, signedIn(), body)
         return json({ ...result, lending: await lendingFor(db, member) })

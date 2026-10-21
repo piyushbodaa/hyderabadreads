@@ -148,8 +148,10 @@ test('owners edit and remove their own books; admins can tidy any shelf', async 
   assert.equal((await edit(piyush, 'malgudi-days-narayan', { note: 'Tidied by an admin.' })).status, 200)
   assert.equal((await edit(rama, 'no-such-book', { note: '' })).status, 404)
 
-  assert.equal((await call('books', { method: 'DELETE', cookie: rama, query: '&id=malgudi-days-narayan--rishi', body: {} })).status, 403)
-  assert.equal((await call('books', { method: 'DELETE', cookie: rama, query: '&id=malgudi-days-narayan', body: {} })).status, 200)
+  // DELETE has no body, the way the My shelf page sends it.
+  assert.equal((await call('books', { method: 'DELETE', cookie: rama, query: '&id=malgudi-days-narayan--rishi' })).status, 403)
+  assert.equal((await call('books', { method: 'DELETE', cookie: rama, query: '&id=malgudi-days-narayan', origin: 'https://evil.example' })).status, 403)
+  assert.equal((await call('books', { method: 'DELETE', cookie: rama, query: '&id=malgudi-days-narayan' })).status, 200)
   assert.ok(!(await loadLibrary(db)).books.some((b) => b.id === 'malgudi-days-narayan'))
 })
 

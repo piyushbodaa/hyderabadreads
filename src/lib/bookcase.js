@@ -186,12 +186,13 @@ export class Bookcase {
         .map((g) => ({ key: g, label: g, colour: genreColour(g), books: map.get(g) }))
     }
 
-    // A member whose books are all placeholders gets "· sample" on their plate.
+    // A member whose books are all placeholders gets a muted plate. Words on
+    // the plate would widen it, and phones would fit one shelf per row, not two.
     return readerList
       .map((r) => {
         const list = visible.filter((b) => b.owner === r.name)
         const sample = list.length > 0 && list.every((b) => b.sample)
-        return { key: r.name, label: sample ? `${r.name} · sample` : r.name, colour: `hsl(${r.hue} 55% 70%)`, books: list }
+        return { key: r.name, label: r.name, sample, colour: `hsl(${r.hue} 55% 70%)`, books: list }
       })
       .filter((g) => g.books.length)
   }
@@ -297,6 +298,8 @@ export class Bookcase {
       // Writer ranges change with the filter, so the text is refreshed every layout.
       el.querySelector('.plate__text').textContent = group.label.toUpperCase()
       el.style.setProperty('--dot', group.colour)
+      el.classList.toggle('is-sample', Boolean(group.sample))
+      el.title = group.sample ? `${group.label}’s shelf is a sample for now` : ''
       el.style.transform = `translate3d(${lx + w / 2}px, ${r * rowH + plankTop + (PLANK * s - 17) / 2}px, 0) translateX(-50%)`
       el.classList.remove('is-gone')
     }

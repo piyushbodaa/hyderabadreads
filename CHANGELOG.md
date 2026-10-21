@@ -4,6 +4,10 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Five books at the top of the page again
+
+- On wider screens, the books floating beside the headline took one book per member, so with only two members' shelves filled they showed just two. They now fill all five spots, one per member first and then more from the same shelves.
+
 ### Every member keeps a shelf, even an empty one
 
 - The shelves now show every member. Members who haven't added books yet get an empty space with their name plate, after the full shelves.

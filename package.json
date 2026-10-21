@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "covers": "node scripts/covers.mjs",
-    "build": "node scripts/covers.mjs && vite build",
+    "build": "node scripts/covers.mjs && vite build && node scripts/agents.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {

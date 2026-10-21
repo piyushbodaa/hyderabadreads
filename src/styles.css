@@ -2023,6 +2023,34 @@ kbd {
   color: var(--text-2);
 }
 
+.footer__brand {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  color: var(--text);
+  font: 500 20px/1 var(--serif);
+  text-decoration: none;
+}
+
+.footer .footer__brand {
+  color: var(--text);
+}
+
+.footer__brand img {
+  width: 64px;
+  height: 64px;
+}
+
+.library__noscript {
+  max-width: 60ch;
+  margin: 24px auto;
+  color: var(--text-2);
+  line-height: 1.6;
+  text-align: center;
+}
+
 .footer__links {
   display: flex;
   flex-wrap: wrap;

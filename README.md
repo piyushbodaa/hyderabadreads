@@ -31,6 +31,8 @@ npm run build
 
 It's open source and contributions are welcome, from club members and anyone else. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add books, update the calendar or change the code, and open a pull request against `main`.
 
+Every change to the site goes through a pull request, so the [pull requests](https://github.com/piyushbodaa/hyderabadreads/pulls?q=is%3Apr) show what changed and why. [CHANGELOG.md](CHANGELOG.md) has the short version.
+
 ## License
 
 [MIT](LICENSE). Book covers and publication data come from [Open Library](https://openlibrary.org) and belong to their respective publishers. They are not covered by this license.

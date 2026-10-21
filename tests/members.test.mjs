@@ -12,11 +12,25 @@ import { loadLibrary } from '../server/library.js'
 const db = await localDatabase()
 const ORIGIN = 'https://hyderabadreads.fun'
 
-// Open Library, as far as these tests need it.
+// Open Library and Apple Books, as far as these tests need them.
 const coverJpeg = await sharp(randomBytes(240 * 360 * 3), { raw: { width: 240, height: 360, channels: 3 } }).jpeg().toBuffer()
+const hdJpeg = await sharp({ create: { width: 926, height: 1400, channels: 3, background: '#2f6f5e' } }).jpeg().toBuffer()
 const calls = []
 async function fakeFetch(url) {
   calls.push(String(url))
+  if (String(url).startsWith('https://itunes.apple.com/search')) {
+    const term = new URL(url).searchParams.get('term')
+    const art = (isbn) => `https://is1-ssl.mzstatic.com/image/thumb/Publication/v4/aa/bb/cc/${isbn}.jpg/100x100bb.jpg`
+    return Response.json({
+      results: term.startsWith('The Guide')
+        ? [
+            { trackName: 'The Guide', artistName: 'R. K. Narayan', artworkUrl100: art('9788845292866') }, // an Italian edition
+            { trackName: 'The Guide: A Novel', artistName: 'R.K. Narayan', artworkUrl100: art('9780143039648') },
+          ]
+        : [],
+    })
+  }
+  if (String(url).startsWith('https://is1-ssl.mzstatic.com/')) return new Response(hdJpeg, { headers: { 'Content-Type': 'image/jpeg' } })
   if (String(url).startsWith('https://openlibrary.org/search.json')) {
     return Response.json({
       docs: [
@@ -129,6 +143,16 @@ test('adding a book fetches its cover, picks spine colours, and puts it on the s
   const again = await (await call('books', { method: 'POST', cookie: await signIn('Rishi'), body: { title: 'Malgudi Days', author: 'R. K. Narayan' } })).json()
   assert.equal(again.book.id, 'malgudi-days-narayan--rishi')
   assert.equal(again.book.cover, null)
+})
+
+test('a cover comes from Apple Books in HD when it has the book, never a translation', async () => {
+  const res = await call('books', { method: 'POST', cookie: await signIn('Rama'), body: { title: 'The Guide', author: 'R. K. Narayan', genre: 'Fiction' } })
+  assert.equal(res.status, 201)
+  const { book } = await res.json()
+  assert.equal(book.w, 800)
+  assert.match(book.cover, /^\/media\/[a-f0-9]{64}\.webp$/)
+  assert.ok(calls.some((u) => u.includes('9780143039648.jpg/1400x1400bb.jpg')))
+  assert.ok(!calls.some((u) => u.includes('9788845292866.jpg/1400x1400bb.jpg')))
 })
 
 test('a book needs a title and an author', async () => {

@@ -4,6 +4,11 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### HD covers, even when Open Library is down
+
+- Book covers are now high resolution: the publisher's own artwork from Apple Books where it has the book, saved at 800px wide instead of 520px, so covers stay sharp on phone screens.
+- Adding a book still gets a cover when Open Library's cover server is down. Open Library is now the fallback.
+
 ### Every change is checked automatically
 
 - Every pull request now runs on GitHub Actions:

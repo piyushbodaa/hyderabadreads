@@ -73,6 +73,7 @@ The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with n
 | `server/auth.js` | Sign-in links and sessions |
 | `server/members.js`, `server/app.js` | The members' API: My shelf and admin |
 | `server/openlibrary.js` | Book search, covers and spine colours from Open Library |
+| `server/covers.js` | A new book's cover: Apple Books' HD artwork first, then Open Library's |
 | `src/me.js`, `src/admin.js` | The My shelf and admin pages |
 | `src/lib/scan.js` | Barcode scanning with the phone camera |
 | `server/loans.js` | Requests, loans, returns, and the weekly digest's data |

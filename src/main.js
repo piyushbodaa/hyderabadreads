@@ -14,6 +14,7 @@ import { session, loadSession, onSession, nextMeetup, meetupPhrase } from './lib
 import { mapsLink, googleEventLink, icsLink, subscribeLinks } from './lib/calendar-links.js'
 import { track } from './lib/track.js'
 import { faq } from './lib/faq.js'
+import { heroBookcase } from './lib/hero-books.js'
 
 // Signed-in members get straight to their own shelf from the header.
 if (looksSignedIn()) {
@@ -580,26 +581,20 @@ const wideHero = matchMedia('(min-width: 1081px)')
 function drawHeroBooks() {
   if (!wideHero.matches || heroBooks.childElementCount) return
   const rand = random(hash(new Date().toISOString().slice(0, 10)))
+  // The books an admin picked for the home page come first, in their order.
+  const featured = String(club.featured ?? '')
+    .split(',')
+    .map((slug) => books.find((b) => b.id === slug && b.cover))
+    .filter(Boolean)
   // Real books first; placeholders only fill in while shelves are still samples.
   const real = books.filter((b) => b.cover && !b.sample)
   const pool = (real.length >= HERO_SLOTS.length ? real : books.filter((b) => b.cover)).sort(() => rand() - 0.5)
-  // One book per member first, for variety; then more from the same shelves,
+  // Then one book per member, for variety; then more from the same shelves,
   // so every slot has a book even while only a few members have added theirs.
-  const picks = []
-  for (const b of pool) if (picks.length < HERO_SLOTS.length && !picks.some((p) => p.owner === b.owner)) picks.push(b)
+  const picks = featured.slice(0, HERO_SLOTS.length)
+  for (const b of pool) if (picks.length < HERO_SLOTS.length && !picks.includes(b) && !picks.some((p) => p.owner === b.owner)) picks.push(b)
   for (const b of pool) if (picks.length < HERO_SLOTS.length && !picks.includes(b)) picks.push(b)
-  heroBooks.innerHTML = picks
-    .map((b, i) => {
-      const s = HERO_SLOTS[i]
-      return `<button type="button" class="hero-book" data-id="${b.id}" style="--x:${s.x}%;--y:${s.y}%;--r:${s.r}deg;--z:${s.z};--depth:${s.depth};--i:${i}" aria-label="${escape(`${b.title} by ${b.author}, from ${b.owner}’s shelf`)}">
-        <span class="hero-book__float"><img src="${b.cover}" alt="" /></span>
-      </button>`
-    })
-    .join('')
-  heroBooks.addEventListener('click', (e) => {
-    const id = e.target.closest('.hero-book')?.dataset.id
-    if (id) viewer.open(books.find((b) => b.id === id), null)
-  })
+  heroBookcase(heroBooks, picks, HERO_SLOTS, { onOpen: (book) => viewer.open(book, null) })
   if (!reduceMotion.matches) {
     $('.hero').addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'mouse') return

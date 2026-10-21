@@ -4,6 +4,12 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Pick the home page books, and turn them over
+
+- Admins choose up to five books for the top of the home page, under **Admin → Club details → Books on the home page**, by pasting their links. Any spots left fill themselves.
+- Those books are now real 3D books, like the one that opens: drag one to turn it and see its spine and back cover. A click still opens it.
+- They respond to the cursor at all now. Before, the headline's invisible box sat on top of them and caught every hover and click.
+
 ### Five books at the top of the page again
 
 - On wider screens, the books floating beside the headline took one book per member, so with only two members' shelves filled they showed just two. They now fill all five spots, one per member first and then more from the same shelves.

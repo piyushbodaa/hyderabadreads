@@ -69,6 +69,15 @@ test('venues and club details', async () => {
   assert.equal((await admin({ action: 'set-settings', settings: { instagram: 'https://evil.example' } })).status, 400)
 })
 
+test('admins pick the home page books by their links, up to five', async () => {
+  const featured = 'https://hyderabadreads.fun/book/dune-herbert\nmalgudi-days-narayan, https://hyderabadreads.fun/book/the-guide-narayan?got=1'
+  assert.equal((await admin({ action: 'set-settings', settings: { featured } })).status, 200)
+  assert.equal((await loadLibrary(db)).club.featured, 'dune-herbert,malgudi-days-narayan,the-guide-narayan')
+  assert.equal((await admin({ action: 'set-settings', settings: { featured: 'a b c d e f' } })).status, 400)
+  assert.equal((await admin({ action: 'set-settings', settings: { featured: '<script>' } })).status, 400)
+  assert.equal((await admin({ action: 'set-settings', settings: { featured: '' } })).status, 200)
+})
+
 test('"Add to calendar" downloads just that day’s meetup', async () => {
   const res = await feedResponse(new Request(`${ORIGIN}/api/feeds?feed=ics&only=${year}-01-04`), { db })
   assert.match(res.headers.get('content-disposition'), new RegExp(`attachment; filename="hyderabad-reads-${year}-01-04.ics"`))

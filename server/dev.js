@@ -9,9 +9,11 @@ import { readFile } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import { fileURLToPath } from 'node:url'
 import { pageResponse, feedResponse, ogResponse, guard } from './handlers.js'
+import { appResponse } from './app.js'
+import { createInvite } from './auth.js'
 
 const root = new URL('../', import.meta.url)
-const HANDLERS = { '/api/page': pageResponse, '/api/feeds': feedResponse, '/api/og': ogResponse }
+const HANDLERS = { '/api/page': pageResponse, '/api/feeds': feedResponse, '/api/og': ogResponse, '/api/app': appResponse }
 
 export function serverPlugin({ dataDir = fileURLToPath(new URL('.data/pglite', root)) } = {}) {
   let db
@@ -29,8 +31,22 @@ export function serverPlugin({ dataDir = fileURLToPath(new URL('.data/pglite', r
 
   const middleware = (templates) => async (req, res, next) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`)
+
+    // Local only: a sign-in link for any member, e.g. /__dev/invite?name=Piyush.
+    if (url.pathname === '/__dev/invite') {
+      const db = await database()
+      const member = await db.one('SELECT id, name FROM members WHERE lower(name) = lower($1) AND removed_at IS NULL', [url.searchParams.get('name') ?? ''])
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+      return res.end(member ? `${url.origin}/join/${await createInvite(db, member.id)}\n` : 'No member by that name.\n')
+    }
+
     const target = rewrite(rewrites, url)
     if (!target) return next()
+    // A rewrite to a page (/me → /me.html) is served by Vite itself.
+    if (!target.pathname.startsWith('/api/')) {
+      req.url = target.pathname + target.search
+      return next()
+    }
     const handler = HANDLERS[target.pathname]
     if (!handler) return next()
     try {

@@ -4,7 +4,7 @@ Thanks for helping. Anyone can contribute, club member or not: bug fixes, new fe
 
 ## Books and meetups
 
-The library and the calendar live in the site's database, not in this repository. Members manage their own shelves on the site, and the club's admins run the calendar. Until sign-in arrives, send your titles to Piyush on the club group.
+The library and the calendar live in the site's database, not in this repository. Members manage their own shelves at [/me](https://hyderabadreads.fun/me): they sign in with a personal link from an admin, then search for a book, scan its barcode, or type it in. Admins look after members and sign-in links at [/admin](https://hyderabadreads.fun/admin).
 
 [`src/data/`](src/data) only holds the starting shelves and calendar that fill a brand-new database, such as a fresh preview or your local copy.
 
@@ -17,7 +17,7 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
-You don't need a database: locally the site uses PGlite (Postgres in WebAssembly) in `.data/`, filled with the starting shelves on first run.
+You don't need a database: locally the site uses PGlite (Postgres in WebAssembly) in `.data/`, filled with the starting shelves on first run. To sign in locally as any member, open [localhost:5173/__dev/invite?name=Piyush](http://localhost:5173/__dev/invite?name=Piyush) and follow the link it prints. That address only exists in local development.
 
 - Work on a branch and open a pull request against `main`.
 - Run `npm test` and `npm run build` before you push.
@@ -41,6 +41,11 @@ The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with n
 | `server/og.js` | Link-preview images, drawn with Satori and sharp |
 | `server/feeds.js` | `llms.txt`, `llms-full.txt`, `library.json`, `sitemap.xml`, `meetups.ics` |
 | `server/dev.js` | Runs the same server inside Vite for `npm run dev` and `npm run preview` |
+| `server/auth.js` | Sign-in links and sessions |
+| `server/members.js`, `server/app.js` | The members' API: My shelf and admin |
+| `server/openlibrary.js` | Book search, covers and spine colours from Open Library |
+| `src/me.js`, `src/admin.js` | The My shelf and admin pages |
+| `src/lib/scan.js` | Barcode scanning with the phone camera |
 
 ## Licence
 

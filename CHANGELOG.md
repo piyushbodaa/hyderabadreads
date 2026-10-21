@@ -4,6 +4,13 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Every change is checked automatically
+
+- Every pull request now runs on GitHub Actions:
+  - the tests and the build;
+  - browser checks in Chrome at phone and laptop sizes, including signing in and opening the shelves offline;
+  - Lighthouse, against budgets for accessibility, layout shift and page weight.
+
 ### Install it, and browse offline
 
 - The site **installs as an app**: **Add to Home Screen** on an iPhone, **Install app** on Android, or **Install** in Chrome or Edge on a computer. It gets its own icon, and opens without the browser's address bar.

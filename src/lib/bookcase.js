@@ -138,7 +138,13 @@ export class Bookcase {
         if (!map.has(letter)) map.set(letter, [])
         map.get(letter).push(b)
       }
-      return [...map].map(([letter, list]) => ({ key: letter, label: letter, colour: '#d9b46a', books: list }))
+      // Each plate names the range of writers on it: "A · Adams – Austen".
+      return [...map].map(([letter, list]) => {
+        const first = list[0].surname
+        const last = list.at(-1).surname
+        const range = first === last ? first : `${first} – ${last}`
+        return { key: letter, label: `${letter} · ${range}`, colour: '#d9b46a', books: list }
+      })
     }
 
     // Biggest language first, so English leads and the rest follow.
@@ -251,11 +257,13 @@ export class Bookcase {
       if (!el) {
         el = document.createElement('div')
         el.className = 'plate is-new'
-        el.innerHTML = `<span class="plate__dot"></span><span class="plate__text">${escape(group.label.toUpperCase())}</span>`
+        el.innerHTML = '<span class="plate__dot"></span><span class="plate__text"></span>'
         this.root.append(el)
         this.labels.set(key, el)
         requestAnimationFrame(() => el.classList.remove('is-new'))
       }
+      // Writer ranges change with the filter, so the text is refreshed every layout.
+      el.querySelector('.plate__text').textContent = group.label.toUpperCase()
       el.style.setProperty('--dot', group.colour)
       el.style.transform = `translate3d(${lx + w / 2}px, ${r * rowH + plankTop + (PLANK * s - 17) / 2}px, 0) translateX(-50%)`
       el.classList.remove('is-gone')

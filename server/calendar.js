@@ -14,6 +14,17 @@ const SETTINGS = {
     if (!Number.isInteger(n) || n < 1 || n > 52) throw new Problem(400, 'Weeks before a loan counts as long should be between 1 and 52.')
     return String(n)
   },
+  // Up to five books for the home page, in order: their links or addresses,
+  // one per line or comma-separated. Any spots left over fill themselves.
+  featured: (v) => {
+    const slugs = String(v ?? '')
+      .split(/[\s,]+/)
+      .map((s) => s.replace(/^.*\/book\//, '').replace(/[/?#].*$/, ''))
+      .filter(Boolean)
+    if (slugs.length > 5) throw new Problem(400, 'Pick up to five books for the home page.')
+    if (slugs.some((s) => !/^[a-z0-9-]{1,120}$/.test(s))) throw new Problem(400, 'Give the home page books as links, like https://hyderabadreads.fun/book/animal-farm-orwell')
+    return slugs.join(',')
+  },
   instagram: (v) => {
     const s = text(v, 200, 'The Instagram address', true)
     if (!/^https:\/\/(www\.)?instagram\.com\/[\w.]+\/?$/.test(s)) throw new Problem(400, 'The Instagram address should look like https://www.instagram.com/hyderabadreads')

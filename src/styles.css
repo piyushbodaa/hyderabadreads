@@ -360,77 +360,77 @@ kbd {
   border-top: 1px solid var(--line);
 }
 
-/* A loose pile of real covers floating in the lamplight */
+/* A loose pile of real books floating in the lamplight. Above the text
+   column, whose box spans the hero, so the books get the pointer; only the
+   books themselves take it, so nothing under the pile's box is blocked. */
 .hero__books {
   position: absolute;
   top: 118px;
   right: max(var(--gutter), calc((100% - 1280px) / 2));
+  z-index: 2;
   width: min(40vw, 540px);
   height: min(64vh, 580px);
   perspective: 1400px;
+  pointer-events: none;
 }
 
+/* Each one a 3D book (the same faces as the one that opens): drag to turn it. */
 .hero-book {
   position: absolute;
   top: var(--y);
   left: var(--x);
   z-index: var(--z);
-  width: clamp(118px, 10.5vw, 162px);
-  aspect-ratio: 2 / 3;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  transform: translate3d(calc(var(--px, 0) * var(--depth) * 22px), calc(var(--py, 0) * var(--depth) * 16px), 0) rotate(var(--r)) rotateY(-12deg);
+  width: var(--W, 140px);
+  height: var(--H, 210px);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: pan-y;
+  user-select: none;
+  transform-style: preserve-3d;
+  transform: translate3d(calc(var(--px, 0) * var(--depth) * 22px), calc(var(--py, 0) * var(--depth) * 16px), 0) rotate(var(--r));
   transition: transform 0.7s var(--ease-out);
   animation: hero-book-in 1.2s calc(0.4s + var(--i) * 0.1s) var(--ease-out) backwards;
 }
 
 .hero-book:hover,
-.hero-book:focus-visible {
+.hero-book:focus-within,
+.hero-book.is-dragging {
   z-index: 10;
-  transform: translate3d(calc(var(--px, 0) * var(--depth) * 22px), calc(var(--py, 0) * var(--depth) * 16px - 12px), 40px) rotate(0deg) rotateY(0deg) scale(1.05);
+  transform: translate3d(calc(var(--px, 0) * var(--depth) * 22px), calc(var(--py, 0) * var(--depth) * 16px - 12px), 40px) rotate(0deg) scale(1.05);
+}
+
+.hero-book.is-dragging {
+  cursor: grabbing;
 }
 
 .hero-book__float {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
   animation: float 7s ease-in-out infinite;
   animation-delay: calc(var(--i) * -1.4s);
 }
 
-/* The page block peeking out behind the cover */
-.hero-book__float::before {
-  content: '';
-  position: absolute;
-  inset: 3px -7px -6px 3px;
-  z-index: -1;
-  border-radius: 2px 4px 4px 2px;
-  background:
-    linear-gradient(90deg, transparent 85%, rgb(0 0 0 / 0.25)),
-    repeating-linear-gradient(90deg, #efe5d0 0 1px, #d9cdb4 1px 2px);
-  box-shadow: 22px 34px 50px rgb(0 0 0 / 0.6);
+.hero-book .face--front {
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.18),
+    0 26px 46px rgb(0 0 0 / 0.55);
 }
 
-.hero-book__float::after {
-  content: '';
+/* Covers the book, for Enter and screen readers; drags and clicks go to the book. */
+.hero-book__open {
   position: absolute;
   inset: 0;
-  border-radius: 2px 4px 4px 2px;
-  background:
-    linear-gradient(90deg, rgb(0 0 0 / 0.35), rgb(255 255 255 / 0.12) 4%, rgb(0 0 0 / 0.12) 7%, transparent 12%),
-    linear-gradient(115deg, transparent 40%, rgb(255 245 230 / 0.14) 52%, transparent 64%);
-  pointer-events: none;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  cursor: inherit;
 }
 
-.hero-book img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 2px 4px 4px 2px;
-  object-fit: cover;
+.hero-book__open:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 6px;
 }
 
 @keyframes hero-book-in {

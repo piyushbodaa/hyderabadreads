@@ -100,6 +100,7 @@ async function start() {
           <label class="field"><span>Weeks before a loan counts as long</span><input class="input" name="overdue_weeks" type="number" min="1" max="52" required /></label>
           <label class="field"><span>Instagram</span><input class="input" name="instagram" type="url" required /></label>
         </div>
+        <label class="field"><span>Books on the home page <small>up to five, by their links, one per line. Any spots left fill themselves.</small></span><textarea class="input" name="featured" rows="5" placeholder="https://hyderabadreads.fun/book/animal-farm-orwell"></textarea></label>
         <button class="btn btn--primary" type="submit">Save</button>
       </form>
     </section>
@@ -282,7 +283,10 @@ function renderCalendar() {
     .join('')
 
   const form = desk.querySelector('[data-settings]')
-  for (const [key, value] of Object.entries(settings)) if (form.elements[key]) form.elements[key].value = value
+  for (const [key, value] of Object.entries(settings)) {
+    if (!form.elements[key]) continue
+    form.elements[key].value = key === 'featured' ? value.split(',').filter(Boolean).map((slug) => `${location.origin}/book/${slug}`).join('\n') : value
+  }
 
   desk.querySelector('[data-photos]').innerHTML = (calendar.photos ?? [])
     .map(

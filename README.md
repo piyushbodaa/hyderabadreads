@@ -2,37 +2,35 @@
 
 The shared library of our weekend book club: every book members are happy to lend or swap, on one set of shelves. Live at **[hyderabadreads.fun](https://hyderabadreads.fun)**.
 
-## Adding books
+## How it's built
 
-Everything lives in [`src/data/library.js`](src/data/library.js). Find your name (or copy a reader block) and add a line:
+- **The shelves** are plain JavaScript and CSS, built with [Vite](https://vite.dev), with no framework.
+- **The library lives in Postgres** ([Neon](https://neon.com), connected through Vercel). The tables are members, books, meetups, venues, settings, and uploaded covers in `media`. The schema is in [`server/migrate.js`](server/migrate.js) and updates itself during each deploy.
+- **The server is a few Vercel Functions** in [`api/`](api), which route their work to [`server/`](server). They render:
+  - the home page, every book (`/book/dune-herbert`) and every member's shelf (`/shelf/piyush`), each with its own title, link preview and schema.org data;
+  - link-preview images (`/og/book/<id>.jpg`);
+  - the feeds: `llms.txt`, `llms-full.txt`, `library.json`, `sitemap.xml`, and `meetups.ics` for calendar apps.
+- Pages are cached at Vercel's edge for a minute, so a change to the library shows up within a minute or so.
 
-```js
-{ title: 'Dune', author: 'Frank Herbert', genre: 'Sci-Fi & Fantasy', blurb: 'One line about it.' },
-```
-
-Only `title` and `author` are required. Optional: `genre`, `language` (if it isn't English), `blurb`, `note`, `onLoanTo`, plus `isbn` or `year` if the fetched cover or date is wrong.
-
-Once a change is merged into `main`, Vercel redeploys in about a minute. Covers, page counts and spine colours are fetched from Open Library during the build.
-
-## Meetup calendar
-
-Dates and venues live in [`src/data/meetups.js`](src/data/meetups.js), one line per meetup. The site shows the month with the next meetup in it. Announcements go out on Instagram at [@hyderabadreads](https://www.instagram.com/hyderabadreads).
+A brand-new database starts with the shelves and calendar in [`src/data/`](src/data). Those books are placeholders, so every shelf is marked as a **sample** until its owner adds real books.
 
 ## Running locally
 
 ```sh
 npm install
-npm run dev      # http://localhost:5173
-npm run covers   # fetch covers for new books
-npm test         # analytics loader tests
+npm run dev      # http://localhost:5173, with a local database in .data/
+npm test         # server, pages, feeds and analytics tests
 npm run build
+npm run preview  # the production build, same local database
 ```
+
+No Postgres to install: locally the site uses [PGlite](https://pglite.dev), Postgres compiled to WebAssembly, and fills it with the starting shelves on first run. Delete `.data/` to start again from scratch.
 
 Visits are counted with Google Analytics on the live site only; see [ANALYTICS.md](ANALYTICS.md).
 
 ## Contributing
 
-It's open source and contributions are welcome, from club members and anyone else. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add books, update the calendar or change the code, and open a pull request against `main`.
+It's open source and contributions are welcome, from club members and anyone else. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to change the code and open a pull request against `main`.
 
 Every change to the site goes through a pull request, so the [pull requests](https://github.com/piyushbodaa/hyderabadreads/pulls?q=is%3Apr) show what changed and why. [CHANGELOG.md](CHANGELOG.md) has the short version.
 

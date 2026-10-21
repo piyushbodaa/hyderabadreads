@@ -1,44 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────────────
-//  HYDERABAD READS · THE SHARED SHELF
+//  HYDERABAD READS · STARTING SHELVES
 //
-//  This file is the whole library. To add books, find your name below (readers
-//  are listed A to Z) and add a line to your `books` list. For someone new, copy
-//  a reader block and slot it in alphabetically.
+//  The library now lives in the database, and members add their own books on
+//  the site. This file only fills a brand-new, empty database: the first
+//  deploy, a fresh preview database, or local development.
 //
-//  Only `title` and `author` are required. Everything else is optional:
+//  These are placeholder books: everyone's shelf starts marked as a sample
+//  until they add their own books or confirm these are really theirs.
 //
-//    genre     One of the genres listed in GENRES below (or any new word).
-//    language  Only if it isn't in English: 'Telugu', 'Hindi', 'Urdu'...
-//    blurb     A line or two about the book, shown when someone opens it.
-//    note      Your own note: "Loved it", "margins full of scribbles"...
-//    onLoanTo  Name of whoever currently has it. Remove the line when it's back.
-//    isbn      Only if the wrong cover shows up: an ISBN pins the exact edition.
-//    year      Only if the first-published year shown is wrong.
-//
-//  Covers, page counts and spine colours are fetched automatically on deploy.
-//  Commit to `main` and the site updates itself in about a minute.
+//  Fields: title and author (required), then genre, language (if it isn't
+//  English), blurb, note, isbn (pins the cover edition) and year.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const CLUB = {
   name: 'Hyderabad Reads',
   tagline: 'Every book on our shelves, in one place.',
   meets: 'Weekend book club · Hyderabad',
-}
-
-// Genre → shelf-label colour. Unknown genres get a colour of their own.
-export const GENRES = {
-  'Literary Fiction': '#c8875e',
-  Fiction: '#d9a55b',
-  Classics: '#b7a27a',
-  'Sci-Fi & Fantasy': '#6f9fc9',
-  Mythology: '#d77f5a',
-  'Thriller & Mystery': '#a46a8e',
-  'Memoir & Biography': '#8fb08a',
-  History: '#c49a6c',
-  'Mind & Philosophy': '#9a8fd0',
-  'Business & Money': '#5fae9f',
-  'Self-Help': '#e0b04f',
-  Science: '#d48f8f',
 }
 
 export const readers = [

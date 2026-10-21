@@ -4,6 +4,16 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### The library moves into a database, and every book gets its own page
+
+- The shelves, members and meetup calendar now live in a Postgres database (Neon, through Vercel) instead of a file in the code. This is the groundwork for members managing their own shelves and loans.
+- Every book has its own address, like [/book/dune-herbert](https://hyderabadreads.fun/book/dune-herbert), and every member their own shelf, like [/shelf/piyush](https://hyderabadreads.fun/shelf/piyush). Old `#book/…` links still work.
+- Links pasted into WhatsApp or Instagram show that book's cover with "On Piyush's shelf" (or the member's covers fanned out), instead of the same site-wide picture for everything.
+- Search engines and anyone without JavaScript get the whole catalogue as plain HTML, plus schema.org data for each book and upcoming meetup.
+- New: [/meetups.ics](https://hyderabadreads.fun/meetups.ics), a calendar feed to subscribe to.
+- The starting shelves were placeholders, so they're marked as **samples**. Their plates read "· SAMPLE", the books sit slightly dimmer, and opening one says it's a placeholder instead of offering "Ask to bring it".
+- Google Analytics never sees member names: shelf addresses are counted together.
+
 ### A proper 404 page, security headers and keyboard shelves
 
 - Addresses that don't exist get a "This page isn't on our shelves" page with links back to the library and the calendar, instead of Vercel's bare "NOT_FOUND".

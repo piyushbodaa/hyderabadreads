@@ -46,6 +46,12 @@ test('empty or non-http referrer is not transmitted', () => {
     assert.equal(fixture('https://hyderabadreads.fun/', value).calls[1][2].page_referrer, '');
   }
 });
+test('member names never reach Google: shelves and second copies are generalised', () => {
+  assert.equal(fixture('https://hyderabadreads.fun/shelf/piyush').calls[1][2].page_location, 'https://hyderabadreads.fun/shelf/');
+  assert.equal(fixture('https://hyderabadreads.fun/book/dune-herbert--piyush').calls[1][2].page_location, 'https://hyderabadreads.fun/book/dune-herbert');
+  assert.equal(fixture('https://hyderabadreads.fun/book/dune-herbert').calls[1][2].page_location, 'https://hyderabadreads.fun/book/dune-herbert');
+  assert.equal(fixture('https://hyderabadreads.fun/', 'https://hyderabadreads.fun/shelf/rama').calls[1][2].page_referrer, 'https://hyderabadreads.fun/shelf/');
+});
 test('HTML includes the local loader once', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.equal((html.match(/src="\/analytics.js"/g) || []).length, 1);

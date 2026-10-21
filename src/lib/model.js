@@ -1,9 +1,8 @@
-// Turns the hand-written library plus the fetched cover manifest into the book
-// objects the site renders: owner, cover, and a deterministic spine design.
+// Turns the library data the server writes into the page (books with their
+// cover colours, members, the calendar) into the book objects the site
+// renders: owner, cover, and a deterministic spine design.
 
-import { readers, GENRES } from '../data/library.js'
-import covers from '../data/covers.json'
-import { bookSlug, slugify } from './slug.js'
+import { GENRES } from './genres.js'
 
 // Cloth colours for books without a cover to sample from.
 const CLOTH = [
@@ -25,82 +24,97 @@ const STYLE_NAMES = Object.keys(STYLES)
 
 export const MAX_SPINE_HEIGHT = 214
 
+// Filled in place by loadLibrary(), so every module importing these sees the
+// same arrays.
 export const books = []
-const seen = new Map()
+export const readerList = []
+export const meetups = []
+export const club = {}
+export const stats = { books: 0, readers: 0, genres: 0, pages: 0, samples: 0 }
 
-for (const reader of readers) {
-  for (const raw of reader.books) {
-    const slug = bookSlug(raw)
-    const dupes = seen.get(slug) ?? 0
-    seen.set(slug, dupes + 1)
-    const meta = covers[slug] ?? {}
-    const rand = random(hash(slug))
+// The library data server/page.js writes into every page.
+export function readPageData(doc = document) {
+  const el = doc.getElementById('hr-data')
+  return el ? JSON.parse(el.textContent) : { members: [], books: [], meetups: [], club: {} }
+}
 
-    const fallback = CLOTH[Math.floor(rand() * CLOTH.length)]
-    const base = meta.color ?? fallback[0]
-    const ink = luminance(base) > 0.42 ? '#1f1813' : '#f4ead6'
-    const accent = meta.accent && contrast(meta.accent, base) > 1.8 ? meta.accent : luminance(base) > 0.42 ? '#7a1f2b' : '#d9b46a'
+export function loadLibrary(data) {
+  books.splice(0, books.length, ...data.books.map(bookFrom))
+  // Readers are shown alphabetically, however the data lists them.
+  readerList.splice(
+    0,
+    readerList.length,
+    ...data.members
+      .map((m) => ({ name: m.name, slug: m.slug, hue: hash(m.name) % 360, books: books.filter((b) => b.owner === m.name) }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })),
+  )
+  meetups.splice(0, meetups.length, ...data.meetups)
+  Object.assign(club, data.club)
+  Object.assign(stats, {
+    books: books.length,
+    readers: readerList.length,
+    genres: new Set(books.map((b) => b.genre)).size,
+    pages: books.reduce((sum, b) => sum + (b.pages ?? 0), 0),
+    samples: books.filter((b) => b.sample).length,
+  })
+}
 
-    let style = STYLE_NAMES[Math.floor(rand() * STYLE_NAMES.length)]
-    if (style === 'foil' && luminance(base) > 0.16) style = 'classic'
-    const titleInk = style === 'foil' ? [accent, '#d9b46a', ink].find((c) => contrast(c, base) >= 3.2) : ink
-    const accentInk = luminance(accent) > 0.42 ? '#1f1813' : '#f4ead6'
+function bookFrom(raw, index) {
+  // A second copy of a book ("dune-herbert--piyush") gets the same spine as the first.
+  const slug = raw.id.split('--')[0]
+  const rand = random(hash(slug))
 
-    const pages = meta.pages ?? null
-    const t = Math.round(pages ? clamp(18 + pages / 13, 24, 66) : 26 + rand() * 16)
-    const h = Math.round(176 + rand() * (MAX_SPINE_HEIGHT - 176))
-    const { fs } = fitTitle(raw.title, style, h, t)
+  const fallback = CLOTH[Math.floor(rand() * CLOTH.length)]
+  const base = raw.color ?? fallback[0]
+  const ink = luminance(base) > 0.42 ? '#1f1813' : '#f4ead6'
+  const accent = raw.accent && contrast(raw.accent, base) > 1.8 ? raw.accent : luminance(base) > 0.42 ? '#7a1f2b' : '#d9b46a'
 
-    books.push({
-      id: dupes ? `${slug}--${slugify(reader.name)}` : slug,
-      index: books.length,
-      title: raw.title,
-      author: raw.author,
-      surname: raw.author.trim().split(/\s+/).pop(),
-      genre: raw.genre ?? 'Other',
-      language: raw.language ?? 'English',
-      blurb: raw.blurb ?? '',
-      note: raw.note ?? '',
-      onLoanTo: raw.onLoanTo ?? null,
-      owner: reader.name,
-      year: raw.year ?? meta.year ?? null,
-      pages,
-      olKey: meta.olKey ?? null,
-      cover: meta.cover ? `/${meta.cover}` : null,
-      aspect: meta.width && meta.height ? meta.width / meta.height : 0.66,
-      base,
-      accent,
-      ink,
-      titleInk,
-      accentInk,
-      style,
-      font: STYLES[style].font,
-      h,
-      t,
-      fs,
-      afs: clamp(t * 0.2, 6.5, 9.5),
-      seed: hash(slug),
-    })
+  let style = STYLE_NAMES[Math.floor(rand() * STYLE_NAMES.length)]
+  if (style === 'foil' && luminance(base) > 0.16) style = 'classic'
+  const titleInk = style === 'foil' ? [accent, '#d9b46a', ink].find((c) => contrast(c, base) >= 3.2) : ink
+  const accentInk = luminance(accent) > 0.42 ? '#1f1813' : '#f4ead6'
+
+  const pages = raw.pages ?? null
+  const t = Math.round(pages ? clamp(18 + pages / 13, 24, 66) : 26 + rand() * 16)
+  const h = Math.round(176 + rand() * (MAX_SPINE_HEIGHT - 176))
+  const { fs } = fitTitle(raw.title, style, h, t)
+
+  return {
+    id: raw.id,
+    index,
+    title: raw.title,
+    author: raw.author,
+    surname: raw.author.trim().split(/\s+/).pop(),
+    genre: raw.genre || 'Other',
+    language: raw.language || 'English',
+    blurb: raw.blurb ?? '',
+    note: raw.note ?? '',
+    onLoanTo: raw.onLoanTo ?? null,
+    owner: raw.owner,
+    sample: Boolean(raw.sample),
+    added: raw.added ?? null,
+    year: raw.year ?? null,
+    pages,
+    isbn: raw.isbn ?? null,
+    olKey: raw.olKey ?? null,
+    cover: raw.cover ?? null,
+    aspect: raw.w && raw.h ? raw.w / raw.h : 0.66,
+    base,
+    accent,
+    ink,
+    titleInk,
+    accentInk,
+    style,
+    font: STYLES[style].font,
+    h,
+    t,
+    fs,
+    afs: clamp(t * 0.2, 6.5, 9.5),
+    seed: hash(slug),
   }
 }
 
-// Readers are shown alphabetically, whatever order library.js lists them in.
-export const readerList = readers
-  .map((r) => ({
-    name: r.name,
-    hue: hash(r.name) % 360,
-    books: books.filter((b) => b.owner === r.name),
-  }))
-  .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
-
 export const genreColour = (genre) => GENRES[genre] ?? `hsl(${hash(genre) % 360} 45% 62%)`
-
-export const stats = {
-  books: books.length,
-  readers: readers.length,
-  genres: new Set(books.map((b) => b.genre)).size,
-  pages: books.reduce((sum, b) => sum + (b.pages ?? 0), 0),
-}
 
 // The faces spines are set in, for measuring: weight, family, letter-spacing (em).
 const FACES = {

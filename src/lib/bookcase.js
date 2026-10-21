@@ -4,7 +4,7 @@
 // transition rather than a reflow.
 
 import { books, readerList, genreColour, hash, fitSpines, SPINE_FONTS, MAX_SPINE_HEIGHT } from './model.js'
-import { GENRES } from '../data/library.js'
+import { GENRES } from './genres.js'
 import { bookVars, spineHTML, escape } from './render.js'
 import { DECOR } from './decor.js'
 
@@ -38,7 +38,7 @@ export class Bookcase {
     const frag = document.createDocumentFragment()
     for (const book of books) {
       const wrap = document.createElement('div')
-      wrap.className = 'book'
+      wrap.className = book.sample ? 'book is-sample' : 'book'
       wrap.setAttribute('role', 'listitem')
       const spine = document.createElement('button')
       spine.type = 'button'
@@ -46,7 +46,10 @@ export class Bookcase {
       spine.className = `spine spine--${book.style} font-${book.font}`
       spine.style.cssText = bookVars(book)
       spine.dataset.id = book.id
-      spine.setAttribute('aria-label', `${book.title} by ${book.author}, from ${book.owner}’s shelf${book.onLoanTo ? `, on loan to ${book.onLoanTo}` : ''}`)
+      spine.setAttribute(
+        'aria-label',
+        `${book.title} by ${book.author}, ${book.sample ? `a sample book on ${book.owner}’s shelf` : `from ${book.owner}’s shelf`}${book.onLoanTo ? `, on loan to ${book.onLoanTo}` : ''}`,
+      )
       spine.innerHTML = spineHTML(book)
       wrap.append(spine)
       frag.append(wrap)
@@ -172,8 +175,13 @@ export class Bookcase {
         .map((g) => ({ key: g, label: g, colour: genreColour(g), books: map.get(g) }))
     }
 
+    // A member whose books are all placeholders gets "· sample" on their plate.
     return readerList
-      .map((r) => ({ key: r.name, label: r.name, colour: `hsl(${r.hue} 55% 70%)`, books: visible.filter((b) => b.owner === r.name) }))
+      .map((r) => {
+        const list = visible.filter((b) => b.owner === r.name)
+        const sample = list.length > 0 && list.every((b) => b.sample)
+        return { key: r.name, label: sample ? `${r.name} · sample` : r.name, colour: `hsl(${r.hue} 55% 70%)`, books: list }
+      })
       .filter((g) => g.books.length)
   }
 
@@ -328,7 +336,7 @@ export class Bookcase {
     const s = parseFloat(this.root.style.getPropertyValue('--s')) || 1
     const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px/.exec(wrap.style.transform)
     if (!m) return
-    this.tip.innerHTML = `<strong>${escape(book.title)}</strong><span>${escape(book.author)} · ${escape(book.owner)}’s shelf</span>`
+    this.tip.innerHTML = `<strong>${escape(book.title)}</strong><span>${escape(book.author)} · ${book.sample ? `sample on ${escape(book.owner)}’s shelf` : `${escape(book.owner)}’s shelf`}</span>`
     const tipW = this.tip.offsetWidth
     const cx = parseFloat(m[1]) + (book.t * s) / 2
     const left = Math.min(Math.max(cx - tipW / 2, 8), this.root.clientWidth - tipW - 8)

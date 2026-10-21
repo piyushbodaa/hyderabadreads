@@ -18,6 +18,8 @@ export default defineConfig({
         admin: page('admin.html'),
         bookplates: page('bookplates.html'),
         digest: page('digest.html'),
+        stats: page('stats.html'),
+        year: page('year.html'),
       },
     },
   },

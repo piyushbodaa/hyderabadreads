@@ -31,8 +31,8 @@ async function loadAssets() {
   return assets
 }
 
-async function render(card, fonts) {
-  const svg = await satori(card, { width: 1200, height: 630, fonts })
+async function render(card, fonts, width = 1200, height = 630) {
+  const svg = await satori(card, { width, height, fonts })
   return sharp(Buffer.from(svg)).jpeg({ quality: 86, mozjpeg: true }).toBuffer()
 }
 
@@ -175,4 +175,47 @@ export async function shelfImage(db, member, books) {
     h('div', { style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'center', width: FAN_W, marginLeft: 20 } }, fan),
   )
   return render(card, fonts)
+}
+
+// A member's year at the club, as a portrait card to share (1080×1350).
+export async function yearImage(y) {
+  const { fonts, logo } = await loadAssets()
+  const n = (v) => Number(v).toLocaleString('en-IN')
+  const stat = (value, label) =>
+    h(
+      'div',
+      { style: { display: 'flex', flexDirection: 'column', marginTop: 34 } },
+      h('div', { style: { fontFamily: 'Fraunces', fontSize: 120, lineHeight: 1, color: PAPER } }, value),
+      h('div', { style: { marginTop: 10, fontSize: 30, color: '#d6c8b2' } }, label),
+    )
+  const lines = [
+    stat(n(y.lent.n), y.lent.n === 1 ? `book lent${y.lent.people ? ', to 1 person' : ''}` : `books lent, to ${y.lent.people} ${y.lent.people === 1 ? 'person' : 'people'}`),
+    stat(n(y.borrowed.n), y.borrowed.n === 1 ? 'book borrowed' : 'books borrowed'),
+    stat(n(y.lent.pages + y.borrowed.pages), 'pages passed around'),
+  ]
+  const extras = [
+    y.mostLent && `Most asked for: ${y.mostLent.title}`,
+    y.topGenre && `Favourite borrowed genre: ${y.topGenre}`,
+    y.added.n && `${y.added.n} ${y.added.n === 1 ? 'book' : 'books'} added to the shelves`,
+  ].filter(Boolean)
+  const card = h(
+    'div',
+    // Satori sizes boxes like CSS's content-box: the padding goes on top of
+    // width and height, so these leave room for it within 1080×1350.
+    { style: { display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: 1080 - 180, height: 1350 - 192, padding: '96px 90px', fontFamily: 'Inter', color: PAPER, ...BACKGROUND } },
+    h(
+      'div',
+      { style: { display: 'flex', flexDirection: 'column' } },
+    h('div', { style: { fontSize: 26, fontWeight: 600, letterSpacing: 5, color: AMBER, textTransform: 'uppercase' } }, `Hyderabad Reads · ${y.year}`),
+    h('div', { style: { marginTop: 26, fontFamily: 'Fraunces', fontSize: 96, lineHeight: 1.02 } }, `${y.name}’s year`),
+    h('div', { style: { display: 'flex', flexDirection: 'column', marginTop: 20 } }, lines),
+    h(
+      'div',
+      { style: { display: 'flex', flexDirection: 'column', marginTop: 50 } },
+      extras.map((t) => h('div', { style: { marginTop: 12, fontSize: 30, color: '#d6c8b2' } }, t)),
+    ),
+    ),
+    h('div', { style: { display: 'flex' } }, footer(logo)),
+  )
+  return render(card, fonts, 1080, 1350)
 }

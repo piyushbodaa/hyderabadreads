@@ -30,6 +30,7 @@ export const books = []
 export const readerList = []
 export const meetups = []
 export const photos = []
+export const wishes = []
 export const club = {}
 export const stats = { books: 0, readers: 0, genres: 0, pages: 0, samples: 0 }
 
@@ -51,6 +52,7 @@ export function loadLibrary(data) {
   )
   meetups.splice(0, meetups.length, ...data.meetups)
   photos.splice(0, photos.length, ...(data.photos ?? []))
+  wishes.splice(0, wishes.length, ...(data.wishes ?? []))
   Object.assign(club, data.club)
   Object.assign(stats, {
     books: books.length,

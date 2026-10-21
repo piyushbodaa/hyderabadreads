@@ -139,6 +139,24 @@ export const MIGRATIONS = [
       )`,
     ],
   },
+  {
+    id: 5,
+    name: 'wanted',
+    statements: [
+      // Books members are looking for: the Wanted shelf.
+      `CREATE TABLE IF NOT EXISTS wishes (
+        id serial PRIMARY KEY,
+        member_id int NOT NULL REFERENCES members (id),
+        title text NOT NULL,
+        author text NOT NULL DEFAULT '',
+        ol_key text,
+        cover_id int,
+        note text NOT NULL DEFAULT '',
+        created_at timestamptz NOT NULL DEFAULT now(),
+        removed_at timestamptz
+      )`,
+    ],
+  },
 ]
 
 export async function migrate(db, { seed = true } = {}) {

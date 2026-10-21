@@ -5,13 +5,13 @@ import '@fontsource-variable/cormorant-garamond'
 import '@fontsource/bebas-neue'
 import './styles.css'
 
-import { books, readerList, stats, meetups, photos, club, hash, random, readPageData, loadLibrary } from './lib/model.js'
+import { books, readerList, stats, meetups, photos, wishes, club, hash, random, readPageData, loadLibrary } from './lib/model.js'
 import { Bookcase } from './lib/bookcase.js'
 import { Viewer } from './lib/viewer.js'
 import { startDust } from './lib/dust.js'
 import { escape } from './lib/render.js'
-import { looksSignedIn } from './lib/api.js'
-import { loadSession, onSession, nextMeetup } from './lib/session.js'
+import { looksSignedIn, copyText } from './lib/api.js'
+import { session, loadSession, onSession, nextMeetup, meetupPhrase } from './lib/session.js'
 import { mapsLink, googleEventLink, icsLink, subscribeLinks } from './lib/calendar-links.js'
 import { track } from './lib/track.js'
 import { faq } from './lib/faq.js'
@@ -31,8 +31,10 @@ const $ = (sel) => document.querySelector(sel)
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
 // `facet` is the chip picked under the search box: one shelf of the current
 // arrangement (a member, genre, language or writer letter), or null for all.
-// `available` hides books that are out on loan, and samples.
-const state = { q: '', facet: null, available: false }
+// The toggles: `available` hides books that are out on loan (and samples),
+// `weekend` keeps books short enough to finish in a weekend, `fresh` the
+// books added this week.
+const state = { q: '', facet: null, available: false, weekend: false, fresh: false }
 
 // Toast
 const toastEl = $('[data-toast]')
@@ -55,7 +57,7 @@ const bookcase = new Bookcase($('[data-bookcase]'), {
     countEl.textContent =
       shown === total
         ? `${total} books from ${readerList.length} readers`
-        : `Showing ${shown} of ${total}${state.available ? ' available now' : ''}${state.q ? ` for “${state.q}”` : ''}${state.facet ? ` ${FACETS[bookcase.arrange].phrase(state.facet.key)}` : ''}`
+        : `Showing ${shown} of ${total}${state.available ? ' available now' : ''}${state.weekend ? ', short enough for a weekend' : ''}${state.fresh ? ', new this week' : ''}${state.q ? ` for “${state.q}”` : ''}${state.facet ? ` ${FACETS[bookcase.arrange].phrase(state.facet.key)}` : ''}`
     emptyEl.hidden = shown > 0
     if (!shown) emptyEl.innerHTML = `Nobody has listed <strong>${escape(state.q || 'that')}</strong> yet. Ask in the group: someone might have it.`
   },
@@ -146,9 +148,11 @@ let facetGroups = []
 function renderChips() {
   facetGroups = bookcase.groups(bookcase.arrange, books)
   chips.setAttribute('aria-label', `Show books by ${FACETS[bookcase.arrange].noun}`)
-  const available = books.filter((b) => !b.onLoan && !b.sample).length
+  const counts = Object.fromEntries(Object.entries(TOGGLES).map(([k, t]) => [k, books.filter(t.test).length]))
   chips.innerHTML = [
-    `<button type="button" class="chip chip--toggle" aria-pressed="${state.available}" data-available>Available now <span>${available}</span></button>`,
+    ...Object.entries(TOGGLES)
+      .filter(([k]) => counts[k] || state[k])
+      .map(([k, t]) => `<button type="button" class="chip chip--toggle" aria-pressed="${state[k]}" data-toggle="${k}">${t.label} <span>${counts[k]}</span></button>`),
     `<button type="button" class="chip" aria-pressed="${!state.facet}" data-key="">All <span>${books.length}</span></button>`,
     ...facetGroups.map(
       (g) =>
@@ -157,10 +161,17 @@ function renderChips() {
   ].join('')
   chips.scrollLeft = 0
 }
+// Toggle chips, before the shelf chips. A toggle with no books to show is hidden.
+const WEEK_AGO = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)
+const TOGGLES = {
+  available: { label: 'Available now', test: (b) => !b.onLoan && !b.sample },
+  weekend: { label: 'Finish it this weekend', test: (b) => b.pages && b.pages <= 250 && !b.sample },
+  fresh: { label: 'New this week', test: (b) => !b.sample && b.added >= WEEK_AGO },
+}
 function currentFilter() {
   const terms = fold(state.q).split(/\s+/).filter(Boolean)
   return (b) =>
-    (!state.available || (!b.onLoan && !b.sample)) &&
+    Object.entries(TOGGLES).every(([k, t]) => !state[k] || t.test(b)) &&
     (!state.facet || state.facet.ids.has(b.id)) &&
     terms.every((t) => haystacks.get(b).includes(t))
 }
@@ -173,9 +184,10 @@ function selectFacet(key) {
 chips.addEventListener('click', (e) => {
   const chip = e.target.closest('.chip')
   if (!chip) return
-  if (chip.matches('[data-available]')) {
-    state.available = !state.available
-    chip.setAttribute('aria-pressed', String(state.available))
+  if (chip.matches('[data-toggle]')) {
+    const key = chip.dataset.toggle
+    state[key] = !state[key]
+    chip.setAttribute('aria-pressed', String(state[key]))
     return applyFilter()
   }
   selectFacet(chip.dataset.key === state.facet?.key ? '' : chip.dataset.key)
@@ -373,6 +385,62 @@ document.addEventListener('click', (e) => e.target.closest('[data-calendar-add]'
   })
 }
 
+// The Wanted shelf: books members are looking for, as empty outlines. If
+// someone already has one, it says so; members can say "I have it".
+function renderWanted() {
+  const box = $('[data-wanted]')
+  if (!wishes.length) return (box.hidden = true)
+  const norm = (t) => fold(t).replace(/^(the|a|an)\s+/, '').replace(/[^a-z0-9]+/g, '')
+  const shelved = new Map(books.filter((b) => !b.sample).map((b) => [norm(b.title), b]))
+  const me = session.member?.name
+  box.hidden = false
+  box.innerHTML = `
+    <div class="wanted__head">
+      <h3 class="wanted__title">Wanted</h3>
+      <p class="wanted__sub">Books members are looking for. Have one? Say so.</p>
+    </div>
+    <ul class="wanted__list">${wishes
+      .map((w, i) => {
+        const match = shelved.get(norm(w.title))
+        const mine = me && w.wisher === me
+        const action = match
+          ? `<a class="wanted__match" href="/book/${escape(match.id)}">${escape(match.owner)} has it</a>`
+          : mine
+            ? '<a class="wanted__match" href="/me">Yours · on My shelf</a>'
+            : `<button type="button" class="linkish" data-have="${i}">I have it</button>`
+        return `<li class="wanted__item">
+          <span class="wanted__cover">${w.coverId ? `<img src="/api/olcover?id=${w.coverId}" alt="" loading="lazy" decoding="async" />` : `<span>${escape(w.title)}</span>`}</span>
+          <span class="wanted__text"><strong>${escape(w.title)}</strong>${w.author ? `<span>${escape(w.author)}</span>` : ''}<em>${escape(w.wisher)} is looking</em>${action}</span>
+        </li>`
+      })
+      .join('')}</ul>`
+}
+// A cover Open Library doesn't have falls back to the title, like the others.
+$('[data-wanted]').addEventListener(
+  'error',
+  (e) => {
+    if (e.target.tagName !== 'IMG') return
+    const title = e.target.closest('.wanted__item')?.querySelector('strong')?.textContent ?? ''
+    e.target.replaceWith(Object.assign(document.createElement('span'), { textContent: title }))
+  },
+  true,
+)
+$('[data-wanted]').addEventListener('click', async (e) => {
+  const button = e.target.closest('[data-have]')
+  if (!button) return
+  const w = wishes[Number(button.dataset.have)]
+  const text = `Hi ${w.wisher}! I have “${w.title}”. Want me to bring it to ${meetupPhrase(nextMeetup())}? 📚`
+  if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+    try {
+      return await navigator.share({ text })
+    } catch (err) {
+      if (err.name === 'AbortError') return
+    }
+  }
+  toast((await copyText(text)) ? `Message to ${w.wisher} copied. Paste it in the club group.` : text)
+})
+renderWanted()
+
 // Surprise me: scroll a random book into view, then take it off the shelf.
 document.querySelectorAll('[data-surprise]').forEach((btn) =>
   btn.addEventListener('click', async () => {
@@ -517,5 +585,6 @@ onSession(() => {
   renderChips()
   applyFilter()
   viewer.refresh()
+  renderWanted()
 })
 loadSession()

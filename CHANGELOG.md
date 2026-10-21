@@ -4,6 +4,13 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Wanted, the club in numbers, and your year
+
+- **Wanted shelf:** members tap **Want** on any search result to add a book they're looking for. Wanted books sit under the shelves as empty outlines with "Rama is looking". If someone already has the book on their shelf, it says so; otherwise any member can tap **I have it**, which writes a message for the group.
+- **New filters** on the shelves: **Finish it this weekend** (250 pages or fewer) and **New this week**, beside **Available now**. A filter only shows when it has books to show.
+- **The club in numbers** (/stats): books, members sharing, pages, loans so far, books out and wanted books; the shelves by genre and by language; the most borrowed and most wanted books; and, for members only, the most generous lenders. Real books only, not samples.
+- **Your year** (/year): what you lent (and to how many people), what you borrowed, the pages passed around and the books you added. It comes with a card to **share** on WhatsApp or Instagram, or to download. The card is made only for you, so nobody else can look up your numbers.
+
 ### A welcome for newcomers
 
 - A new **Your first meetup** section covers what to expect: bring any book, read and then chat, and just show up (no sign-up, a small fee). It ends with the next date and directions.

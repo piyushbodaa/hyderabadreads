@@ -10,6 +10,9 @@
     },
     "api/og.js": {
       "includeFiles": "{public/covers/**,public/logo-512.png,node_modules/@fontsource/fraunces/files/fraunces-latin-500-normal.woff,node_modules/@fontsource/inter/files/inter-latin-400-normal.woff,node_modules/@fontsource/inter/files/inter-latin-600-normal.woff}"
+    },
+    "api/app.js": {
+      "includeFiles": "{public/logo-512.png,node_modules/@fontsource/fraunces/files/fraunces-latin-500-normal.woff,node_modules/@fontsource/inter/files/inter-latin-400-normal.woff,node_modules/@fontsource/inter/files/inter-latin-600-normal.woff}"
     }
   },
   "headers": [
@@ -52,6 +55,8 @@
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/bookplates", "destination": "/bookplates.html" },
     { "source": "/digest", "destination": "/digest.html" },
+    { "source": "/stats", "destination": "/stats.html" },
+    { "source": "/year", "destination": "/year.html" },
     { "source": "/api/:route", "destination": "/api/app?route=:route" }
   ],
   "redirects": [

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Your year · Hyderabad Reads</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0f0c0a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script defer src="/analytics.js"></script>
+  </head>
+  <body class="desk-page">
+    <header class="topbar is-scrolled">
+      <a class="brand" href="/" aria-label="Hyderabad Reads, home">
+        <img class="brand__mark" src="/logo.svg" alt="" width="34" height="34" />
+        <span class="brand__name">Hyderabad Reads</span>
+      </a>
+      <nav class="topnav" aria-label="Sections">
+        <a href="/#library">Library</a>
+        <a href="/me" class="topnav__cta">My shelf</a>
+      </nav>
+    </header>
+
+    <main class="desk desk--wide" data-desk aria-live="polite">
+      <p class="desk__loading">Counting…</p>
+    </main>
+
+    <div class="toast" role="status" aria-live="polite" data-toast></div>
+    <script type="module" src="/src/year.js"></script>
+  </body>
+</html>

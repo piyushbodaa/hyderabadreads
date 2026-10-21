@@ -52,6 +52,7 @@ The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with n
 | `server/calendar.js` | Admins' calendar, venues and club details |
 | `src/lib/calendar-links.js`, `src/lib/meetup-time.js` | Add-to-calendar links, and meetup times as calendar times |
 | `src/lib/faq.js`, `server/photos.js` | Newcomers' questions (page and schema.org), and meetup photos |
+| `server/extras.js`, `src/stats.js`, `src/year.js` | The Wanted shelf, the club in numbers, and each member's year |
 
 ## Licence
 

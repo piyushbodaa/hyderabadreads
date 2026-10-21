@@ -4,6 +4,12 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Every member keeps a shelf, even an empty one
+
+- The shelves now show every member. Members who haven't added books yet get an empty space with their name plate, after the full shelves.
+- Each member's own page (for example /shelf/aakansha) says when their shelf is empty, and asks them to send a photo of their books to Piyush. The link preview for that page says the same.
+- Every name in the chips and in Readers opens its shelf, empty or not.
+
 ### HD covers, even when Open Library is down
 
 - Book covers are now high resolution: the publisher's own artwork from Apple Books where it has the book, saved at 800px wide instead of 520px, so covers stay sharp on phone screens.

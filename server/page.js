@@ -67,7 +67,7 @@ function shelfPage(member, data) {
     title: `${member.name}’s shelf · ${NAME}`,
     description: books.length
       ? `${books.length} ${books.length === 1 ? 'book' : 'books'} on ${member.name}’s shelf at ${NAME}: ${titles.join(', ')}${books.length > 3 ? ' and more' : ''}.`
-      : `${member.name}’s shelf at ${NAME}. Nothing on it yet.`,
+      : `${member.name}’s shelf at ${NAME} is empty for now. ${member.name}, send a photo of your books to Piyush and they’ll be up here.`,
     image: `/og/shelf/${member.slug}.jpg`,
     imageType: 'image/jpeg',
     imageAlt: `Books on ${member.name}’s shelf at ${NAME}`,

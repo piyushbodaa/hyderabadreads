@@ -55,12 +55,19 @@ const bookcase = new Bookcase($('[data-bookcase]'), {
   onOpen: (book, spine) => viewer.open(book, spine),
   onLayout: (shown) => {
     const total = books.length
-    countEl.textContent =
-      shown === total
+    // A member's own shelf, empty: say so, and how to fill it.
+    const emptyMember = !shown && bookcase.arrange === 'reader' && state.facet && !state.q ? readerList.find((r) => r.name === state.facet.key && !r.books.length) : null
+    countEl.textContent = emptyMember
+      ? `Nothing on ${emptyMember.name}’s shelf yet`
+      : shown === total
         ? `${total} books from ${readerList.length} readers`
         : `Showing ${shown} of ${total}${state.available ? ' available now' : ''}${state.weekend ? ', short enough for a weekend' : ''}${state.fresh ? ', new this week' : ''}${state.q ? ` for “${state.q}”` : ''}${state.facet ? ` ${FACETS[bookcase.arrange].phrase(state.facet.key)}` : ''}`
     emptyEl.hidden = shown > 0
-    if (!shown) emptyEl.innerHTML = `Nobody has listed <strong>${escape(state.q || 'that')}</strong> yet. Ask in the group: someone might have it.`
+    if (!shown) {
+      emptyEl.innerHTML = emptyMember
+        ? `<span><strong>${escape(emptyMember.name)}’s shelf is empty for now.</strong><br />${escape(emptyMember.name)}, send a photo of your books to Piyush and they’ll be up here.</span>`
+        : `Nobody has listed <strong>${escape(state.q || 'that')}</strong> yet. Ask in the group: someone might have it.`
+    }
     if (display.view === 'covers') renderCovers()
   },
 })
@@ -204,8 +211,17 @@ const coversEl = $('[data-covers]')
 const frame = $('.bookcase-frame')
 function renderCovers() {
   const byMember = bookcase.arrange === 'reader'
-  coversEl.innerHTML = bookcase
-    .groups()
+  const groups = bookcase.groups()
+  // Members with no books yet, together at the end: each name opens their shelf.
+  const waiting = groups.filter((g) => g.empty)
+  const waitingHTML = waiting.length
+    ? `<section class="covers__group covers__waiting"><h3 class="covers__head">Empty shelves, waiting for books</h3>
+        <p>${waiting.map((g) => `<a href="/shelf/${escape(g.slug)}" style="--dot:${g.colour}"><i></i>${escape(g.label)}</a>`).join('')}</p></section>`
+    : ''
+  // With nothing to show, the shelves' message (which sits on the shelves) comes here too.
+  if (!groups.length) return void (coversEl.innerHTML = `<p class="covers__none">${emptyEl.innerHTML}</p>`)
+  coversEl.innerHTML = groups
+    .filter((g) => !g.empty)
     .map(
       (g) => `
       <section class="covers__group">
@@ -213,7 +229,7 @@ function renderCovers() {
         <div class="covers__grid">${g.books.map((b) => coverCard(b, byMember, g.sample)).join('')}</div>
       </section>`,
     )
-    .join('')
+    .join('') + waitingHTML
   emptyEl.hidden = bookcase.order.length > 0
 }
 // Under each cover: the writer when the heading already names the member,
@@ -293,10 +309,10 @@ $('[data-readers]').innerHTML = readerList
     const count = r.books.length === 1 ? '1 book' : `${r.books.length} books`
     const meta = r.books.length
       ? `${sample ? `${count}, all samples` : count} · ${escape(genres.slice(0, 2).join(', '))}${genres.length > 2 ? ` +${genres.length - 2}` : ''}`
-      : 'No books yet'
+      : 'Shelf empty for now'
     return `
       <li>
-        <button type="button" class="reader${sample ? ' is-sample' : ''}" data-reader="${escape(r.name)}" style="--hue:${r.hue}"${r.books.length ? '' : ' disabled'}>
+        <button type="button" class="reader${sample ? ' is-sample' : ''}${r.books.length ? '' : ' is-empty'}" data-reader="${escape(r.name)}" style="--hue:${r.hue}">
           <span class="avatar">${escape(r.name[0])}</span>
           <span class="reader__name">${escape(r.name)}</span>
           <span class="reader__meta">${meta}</span>

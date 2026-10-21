@@ -96,6 +96,14 @@ test('a shelf page describes the member’s books', async () => {
   assert.match(html, /5 books on Piyush’s shelf at Hyderabad Reads: The God of Small Things/)
 })
 
+test('an empty shelf still has its page, asking for a photo of the books', () => {
+  const data = { members: [{ name: 'Aakansha', slug: 'aakansha' }], books: [], meetups: [], club: {} }
+  const { status, html } = renderPage({ template, notFound, data, route: routeFor('shelf', 'aakansha') })
+  assert.equal(status, 200)
+  assert.match(html, /<title>Aakansha’s shelf · Hyderabad Reads<\/title>/)
+  assert.match(html, /is empty for now\. Aakansha, send a photo of your books to Piyush/)
+})
+
 test('unknown books and shelves are 404s', async () => {
   assert.equal((await page('book', 'no-such-book')).status, 404)
   assert.equal((await page('shelf', 'nobody')).status, 404)

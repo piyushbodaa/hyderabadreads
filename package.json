@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "The shared library of the Hyderabad Reads weekend book club.",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

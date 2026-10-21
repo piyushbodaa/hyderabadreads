@@ -36,7 +36,7 @@ npm run dev      # http://localhost:5173
 ```
 
 - Work on a branch and open a pull request against `main`.
-- Run `npm run build` before you push. It also fetches covers for any new books.
+- Run `npm test` and `npm run build` before you push. The build also fetches covers for any new books.
 - Check your change at phone width (about 390px) as well as on a laptop. Most of the club opens the site on a phone.
 - Keep pull requests small. The pull request template asks what changed and why. Fill it in so the club can follow along, and add screenshots for anything visual.
 - Add a line to [`CHANGELOG.md`](CHANGELOG.md) under today's date. If you forget, a maintainer will do it when merging.

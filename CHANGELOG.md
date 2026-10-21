@@ -4,6 +4,10 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-21
 
+### Visit counts with Google Analytics
+
+- The live site counts page visits with Google Analytics, set up privately: only on hyderabadreads.fun, with addresses stripped of anything after `?` or `#`, no member details, and Google Signals and ad personalisation off. The footer says so. Details in [ANALYTICS.md](ANALYTICS.md).
+
 ### New link preview
 
 - Links shared on WhatsApp, Instagram and elsewhere now show the new logo, with a fresh stack of members' books and a mention of the meetups. The image has a new file name so apps fetch it again instead of reusing the old preview.

@@ -5,6 +5,7 @@
 import '@fontsource-variable/fraunces/opsz.css'
 import '@fontsource-variable/inter'
 import './styles.css'
+import './lib/pwa.js'
 
 import { renderSVG } from 'uqr'
 import { api } from './lib/api.js'

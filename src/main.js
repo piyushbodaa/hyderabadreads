@@ -2,6 +2,7 @@ import '@fontsource-variable/fraunces/opsz.css'
 import '@fontsource-variable/fraunces/opsz-italic.css'
 import '@fontsource-variable/inter'
 import './styles.css'
+import './lib/pwa.js'
 
 import { books, readerList, meetups, photos, wishes, club, hash, random, readPageData, loadLibrary } from './lib/model.js'
 import { Bookcase } from './lib/bookcase.js'
@@ -252,6 +253,20 @@ viewSwitch.addEventListener('keydown', (e) => {
   other.click()
   other.focus()
 })
+// A cover that can't load (offline, and never seen before) shows the title on
+// cloth, like the books without a cover.
+coversEl.addEventListener(
+  'error',
+  (e) => {
+    if (e.target.tagName !== 'IMG') return
+    const b = books.find((x) => x.id === e.target.closest('[data-id]')?.dataset.id)
+    if (!b) return
+    const cloth = Object.assign(document.createElement('span'), { className: 'covers__cloth', textContent: b.title })
+    cloth.style.cssText = `--base:${b.base};--ink:${b.ink}`
+    e.target.replaceWith(cloth)
+  },
+  true,
+)
 coversEl.addEventListener('click', (e) => {
   const item = e.target.closest('[data-id]')
   if (item) viewer.open(books.find((b) => b.id === item.dataset.id), null)
@@ -642,3 +657,6 @@ onSession(() => {
   renderWanted()
 })
 loadSession()
+
+// Offline, the service worker shows the shelves as they were last seen; say so.
+if (!navigator.onLine) toast('You’re offline: these are the shelves as they were the last time you looked.')

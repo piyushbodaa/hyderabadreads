@@ -248,7 +248,8 @@ kbd {
     color 0.2s;
 }
 
-.topnav a:hover {
+.topnav a:hover,
+.topnav a[aria-current='page'] {
   background: var(--surface-2);
   color: var(--text);
 }
@@ -4198,6 +4199,16 @@ textarea.input {
   }
 }
 
+/* Between phone and laptop the header holds less: Readers and GitHub are
+   further down the page and in the footer, and the button says "Add books". */
+@media (min-width: 641px) and (max-width: 880px) {
+  .topnav .topnav__readers,
+  .topnav .topnav__gh,
+  .topnav__your {
+    display: none;
+  }
+}
+
 /* The smallest phones drop the header icons (the footer still has both) and
    get the full "Add your books" back. */
 @media (max-width: 380px) {
@@ -4330,4 +4341,383 @@ textarea.input {
     padding: 2px 6px;
     font-size: 10px;
   }
+}
+
+/* ─── The blog: members' writing, here and on the home page ───────────────── */
+
+.blog__head {
+  max-width: 720px;
+}
+
+.blog__chips {
+  margin: -8px 0 26px;
+}
+
+.blog__chips .chip {
+  text-decoration: none;
+}
+
+.blog__chips .chip[aria-current='page'] {
+  border-color: transparent;
+  background: var(--text);
+  color: #1a130c;
+}
+
+.blog__chips .chip[aria-current='page'] span {
+  color: #6d5d4a;
+}
+
+.posts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+  gap: 20px;
+}
+
+.post {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  transition:
+    transform 0.35s var(--ease-out),
+    border-color 0.25s,
+    background 0.25s;
+}
+
+.post:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+/* The whole card is the link to the post; the focus ring goes round it. */
+.post:has(.post__title a:focus-visible) {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.post__art {
+  position: relative;
+  display: grid;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 12%, hsl(var(--hue) 45% 34% / 0.75), transparent 60%),
+    linear-gradient(150deg, hsl(var(--hue) 30% 20%), hsl(var(--hue) 34% 9%));
+}
+
+.post__art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s var(--ease-out);
+}
+
+.post:hover .post__art img {
+  transform: scale(1.035);
+}
+
+/* A post without a picture shows a line of it, like a pull quote. */
+.post__quote {
+  display: -webkit-box;
+  align-self: center;
+  margin: 0 26px;
+  overflow: hidden;
+  color: hsl(var(--hue) 45% 88%);
+  font: italic 380 clamp(18px, 1.9vw, 22px)/1.4 var(--serif);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+.post__quote::before {
+  content: '“';
+  margin-right: 2px;
+  color: hsl(var(--hue) 60% 72%);
+}
+
+.post__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 9px;
+  padding: 18px 20px 20px;
+}
+
+.post__source {
+  color: var(--amber);
+  font: 600 11.5px/1 var(--sans);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.post__title {
+  font: 430 21px/1.24 var(--serif);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.post__title a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.post__title a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.post__title a:focus-visible {
+  outline: none;
+}
+
+.post__excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.post__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.post__meta .avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+
+/* Above the card's own link, so the writer's name opens their posts. */
+.post__meta a {
+  position: relative;
+  z-index: 1;
+  color: var(--text-2);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.post__meta a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+/* The newest post leads, picture beside the words, on wider screens. */
+@media (min-width: 900px) {
+  .post--lead {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+
+  .post--lead .post__art {
+    flex: 1.2;
+    aspect-ratio: auto;
+    min-height: 360px;
+  }
+
+  .post--lead .post__body {
+    flex: 1;
+    justify-content: center;
+    gap: 14px;
+    padding: 36px 40px;
+  }
+
+  .post--lead .post__title {
+    font-size: clamp(28px, 2.8vw, 38px);
+    line-height: 1.12;
+  }
+
+  .post--lead .post__excerpt {
+    font-size: 16.5px;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+  }
+
+  .post--lead .post__quote {
+    margin: 0 44px;
+    font-size: clamp(24px, 2.4vw, 32px);
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+  }
+
+  .post--lead .post__meta {
+    margin-top: 6px;
+  }
+}
+
+.writers {
+  margin-top: 56px;
+}
+
+.writers__title {
+  margin-bottom: 16px;
+  font: 400 26px/1.1 var(--serif);
+}
+
+.writers__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.writer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.writer__text {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+
+.writer__name {
+  color: var(--text);
+  font: 450 18px/1.2 var(--serif);
+  text-decoration: none;
+}
+
+.writer__name:hover {
+  text-decoration: underline;
+}
+
+.writer__blog {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.writer__follow.btn {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.blog__join {
+  margin-top: 40px;
+}
+
+.blog__join .desk__links {
+  margin-top: 4px;
+}
+
+.blog__empty {
+  margin-top: 0;
+}
+
+/* On the home page, under Readers. */
+.writing {
+  padding: 40px var(--gutter) 96px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 700px;
+}
+
+.writing .posts {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* At most three posts on the home page: a column each. */
+@media (min-width: 900px) {
+  .posts--home {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  /* Posts on the home page become one row to swipe through, like Readers. */
+  .posts--home {
+    display: flex;
+    gap: 12px;
+    margin-right: calc(var(--gutter) * -1);
+    padding: 2px var(--gutter) 8px 2px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .posts--home::-webkit-scrollbar {
+    display: none;
+  }
+
+  .posts--home .post {
+    flex: none;
+    width: min(82vw, 320px);
+    scroll-snap-align: start;
+  }
+
+  .post:hover {
+    transform: none;
+  }
+
+  .writer__follow.btn {
+    padding: 0 13px;
+  }
+}
+
+/* ─── My shelf and Admin: blogs ───────────────────────────────────────────── */
+
+.blog-list:not(:empty) {
+  margin-top: 22px;
+}
+
+.lend__sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.lend__error {
+  display: block;
+  margin-top: 4px;
+  color: #f2a08f;
+  font-size: 13px;
+}
+
+.addform--blog {
+  grid-template-columns: minmax(150px, 0.8fr) 1.6fr auto;
+  align-items: end;
+}
+
+@media (max-width: 640px) {
+  .addform--blog {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lend.is-hidden .lend__text {
+  opacity: 0.55;
+}
+
+.lend__text a {
+  color: var(--text);
 }

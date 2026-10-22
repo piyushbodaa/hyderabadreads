@@ -7,10 +7,13 @@ The shared library of our weekend book club: every book members are happy to len
 - **The shelves** are plain JavaScript and CSS, built with [Vite](https://vite.dev), with no framework.
 - **The library lives in Postgres** ([Neon](https://neon.com), connected through Vercel). The tables are members, books, meetups, venues, settings, and uploaded covers in `media`. The schema is in [`server/migrate.js`](server/migrate.js) and updates itself during each deploy.
 - **The server is a few Vercel Functions** in [`api/`](api), which route their work to [`server/`](server). They render:
-  - the home page, every book (`/book/dune-herbert`) and every member's shelf (`/shelf/piyush`), each with its own title, link preview and schema.org data;
+  - the home page, every book (`/book/dune-herbert`), every member's shelf (`/shelf/piyush`) and the blog (`/blog`), each with its own title, link preview and schema.org data;
   - link-preview images (`/og/book/<id>.jpg`);
-  - the feeds: `llms.txt`, `llms-full.txt`, `library.json`, `sitemap.xml`, and `meetups.ics` for calendar apps.
+  - the feeds: `llms.txt`, `llms-full.txt`, `library.json`, `sitemap.xml`, `meetups.ics` for calendar apps, and `blog/feed.xml`, the blog as RSS.
 - Pages are cached at Vercel's edge for a minute, so a change to the library shows up within a minute or so.
+- **The blog** gathers what members write elsewhere: Substack, Medium, WordPress, Blogger, Ghost or their own sites. The server reads each blog's RSS or Atom feed ([`server/rss.js`](server/rss.js)) and keeps every post's title, link, date, excerpt and picture ([`server/blogs.js`](server/blogs.js)). Every post links back to where it was published.
+  - Feeds are read when a blog is added, once a day (the cron in `vercel.json`), whenever a page is shown with a feed more than an hour old, and when a writer taps **Check now**.
+  - Addresses come from members, so they're fetched through [`server/safe-fetch.js`](server/safe-fetch.js), which only ever reaches the public internet.
 - **It works offline, and installs as an app.** A service worker ([`public/sw.js`](public/sw.js)) keeps the last copy of each page and the covers it has shown, so the shelves open without a connection. With [`public/manifest.webmanifest`](public/manifest.webmanifest) and the icons in `public/icons/` (drawn by `node scripts/icons.mjs`), phones can add it to the home screen.
 
 A brand-new database starts with the shelves and calendar in [`src/data/`](src/data). Those books are placeholders, so every shelf is marked as a **sample** until its owner adds real books.
@@ -21,7 +24,8 @@ Members sign in with a personal link, so there are no passwords, emails or phone
 
 - add books by searching Open Library, scanning the barcode, or typing them in;
 - write a note for each book;
-- keep or clear their sample books.
+- keep or clear their sample books;
+- add their blog, so their posts appear on the club's blog, and hide any post they'd rather not show there.
 
 The database only stores a hash of each link. Making someone a new link cancels their old one.
 

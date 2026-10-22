@@ -83,6 +83,9 @@ The site is plain JavaScript and CSS built with [Vite](https://vite.dev), with n
 | `src/lib/calendar-links.js`, `src/lib/meetup-time.js` | Add-to-calendar links, and meetup times as calendar times |
 | `src/lib/faq.js`, `server/photos.js` | Newcomers' questions (page and schema.org), and meetup photos |
 | `server/extras.js`, `src/stats.js`, `src/year.js` | The Wanted shelf, the club in numbers, and each member's year |
+| `server/blogs.js`, `server/rss.js` | The blog: members' blogs, reading their RSS and Atom feeds, and the posts kept from them |
+| `server/safe-fetch.js` | Fetching from other sites on a member's say-so, from the public internet only |
+| `blog.html`, `src/blog.js` | The blog page (`/blog`): a template the server writes the posts into |
 | `public/sw.js`, `src/lib/pwa.js` | The service worker that keeps the shelves working offline, and its registration |
 | `e2e/`, `lighthouserc.json`, `scripts/serve-build.mjs` | The browser checks and Lighthouse budgets, and the server they run against |
 

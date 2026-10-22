@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f0c0a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-title" content="Hyd Reads" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="alternate" type="application/rss+xml" href="/blog/feed.xml" title="Hyderabad Reads: writing by members" />
+    <!-- The server (server/page.js) replaces everything between these markers
+         with the title, description and link preview for the page shown: the
+         whole blog, or one writer's posts (/blog?by=swapnil). -->
+    <!--hr:meta-->
+    <title>The blog · Hyderabad Reads</title>
+    <meta name="description" content="Essays, reviews and notes by members of the Hyderabad Reads book club, from Substack, Medium, WordPress and their own sites." />
+    <link rel="canonical" href="https://hyderabadreads.fun/blog" />
+    <!--/hr:meta-->
+    <script defer src="/analytics.js"></script>
+  </head>
+  <body class="desk-page">
+    <a class="skip" href="#top">Skip to the posts</a>
+    <header class="topbar is-scrolled">
+      <a class="brand" href="/" aria-label="Hyderabad Reads, home">
+        <img class="brand__mark" src="/logo.svg" alt="" width="34" height="34" />
+        <span class="brand__name">Hyderabad Reads</span>
+      </a>
+      <nav class="topnav" aria-label="Sections">
+        <a href="/#library">Library</a>
+        <a href="/blog" aria-current="page">Blog</a>
+        <a href="/#calendar">Calendar</a>
+        <a href="/me" class="topnav__cta">My shelf</a>
+      </nav>
+    </header>
+
+    <!-- The posts, written in by the server: server/page.js, renderBlog(). -->
+    <main class="desk desk--wide blog" id="top">
+      <!--hr:blog-->
+    </main>
+
+    <footer class="footer">
+      <a class="footer__brand" href="/" aria-label="Hyderabad Reads, home">
+        <img src="/logo.svg" alt="" width="64" height="64" />
+        <span>Hyderabad Reads</span>
+      </a>
+      <p class="footer__links footer__links--small">
+        <a href="/#library">The library</a>
+        <a href="/#calendar">Meetups</a>
+        <a href="/blog/feed.xml">The blog by RSS</a>
+        <a href="https://www.instagram.com/hyderabadreads" target="_blank" rel="noopener">@hyderabadreads</a>
+      </p>
+      <p>Every post belongs to its writer, and opens where it was published.</p>
+    </footer>
+
+    <script type="module" src="/src/blog.js"></script>
+  </body>
+</html>

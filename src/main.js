@@ -12,7 +12,7 @@ import { escape } from './lib/render.js'
 import { looksSignedIn, copyText } from './lib/api.js'
 import { session, loadSession, onSession, nextMeetup, meetupPhrase } from './lib/session.js'
 import { mapsLink, googleEventLink, icsLink, subscribeLinks } from './lib/calendar-links.js'
-import { track } from './lib/track.js'
+import { track, trackPostOpens } from './lib/track.js'
 import { faq } from './lib/faq.js'
 import { heroBookcase } from './lib/hero-books.js'
 
@@ -422,6 +422,8 @@ const meetupsHTML = renderMeetups()
 if (meetupsHTML) $('[data-meetups]').innerHTML = meetupsHTML
 else $('#calendar').hidden = true
 document.addEventListener('click', (e) => e.target.closest('[data-calendar-add]') && track('calendar_add'))
+// The club's writers (a section the server draws, when there are posts).
+trackPostOpens()
 
 // The hero's meetup line comes from the server; members don't need "New here?".
 if (looksSignedIn()) $('[data-newcomer]')?.remove()

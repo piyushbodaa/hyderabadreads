@@ -22,6 +22,8 @@ export default defineConfig({
         digest: page('digest.html'),
         stats: page('stats.html'),
         year: page('year.html'),
+        // Like index.html, a template the server fills in (/blog).
+        blog: page('blog.html'),
       },
     },
   },

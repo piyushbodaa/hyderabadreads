@@ -6,15 +6,18 @@
   "regions": ["sin1"],
   "functions": {
     "api/page.js": {
-      "includeFiles": "server/generated/*.html"
+      "includeFiles": "server/generated/*.html",
+      "maxDuration": 60
     },
     "api/og.js": {
       "includeFiles": "{public/covers/**,public/logo-512.png,node_modules/@fontsource/fraunces/files/fraunces-latin-500-normal.woff,node_modules/@fontsource/inter/files/inter-latin-400-normal.woff,node_modules/@fontsource/inter/files/inter-latin-600-normal.woff}"
     },
     "api/app.js": {
-      "includeFiles": "{public/logo-512.png,node_modules/@fontsource/fraunces/files/fraunces-latin-500-normal.woff,node_modules/@fontsource/inter/files/inter-latin-400-normal.woff,node_modules/@fontsource/inter/files/inter-latin-600-normal.woff}"
+      "includeFiles": "{public/logo-512.png,node_modules/@fontsource/fraunces/files/fraunces-latin-500-normal.woff,node_modules/@fontsource/inter/files/inter-latin-400-normal.woff,node_modules/@fontsource/inter/files/inter-latin-600-normal.woff}",
+      "maxDuration": 60
     }
   },
+  "crons": [{ "path": "/api/blog-refresh", "schedule": "30 0 * * *" }],
   "headers": [
     {
       "source": "/(.*)",
@@ -51,6 +54,8 @@
     { "source": "/", "destination": "/api/page?route=home" },
     { "source": "/book/:slug", "destination": "/api/page?route=book&slug=:slug" },
     { "source": "/shelf/:slug", "destination": "/api/page?route=shelf&slug=:slug" },
+    { "source": "/blog", "destination": "/api/page?route=blog" },
+    { "source": "/blog/feed.xml", "destination": "/api/feeds?feed=blog" },
     { "source": "/og/:kind/:file", "destination": "/api/og?kind=:kind&file=:file" },
     { "source": "/llms.txt", "destination": "/api/feeds?feed=llms" },
     { "source": "/llms-full.txt", "destination": "/api/feeds?feed=llms-full" },

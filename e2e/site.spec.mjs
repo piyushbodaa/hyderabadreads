@@ -53,6 +53,16 @@ test('nothing makes the page scroll sideways', async ({ page }) => {
   expect(scrollWidth).toBeLessThanOrEqual(innerWidth)
 })
 
+test('the blog has its own page, which nothing makes scroll sideways', async ({ page }) => {
+  const response = await page.goto('/blog')
+  expect(response.status()).toBe(200)
+  await expect(page).toHaveTitle(/^The blog · Hyderabad Reads/)
+  await expect(page.locator('h1')).toHaveText('What our members are writing')
+  await expect(page.locator('a[href="/me#writing"]')).toBeVisible()
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth }))
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth)
+})
+
 test('a member signs in with their link and lands on their shelf', async ({ page, request }, testInfo) => {
   // A new link cancels the member's last one, so each size signs in as
   // someone different.

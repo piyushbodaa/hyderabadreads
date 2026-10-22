@@ -8,6 +8,7 @@ import { Problem, myShelf, addBook, updateBook, removeBook, shelfAction, adminDa
 import { lendingFor, loanAction, digest } from './loans.js'
 import { CALENDAR_ACTIONS, adminCalendar, calendarAction } from './calendar.js'
 import { addWish, removeWish, myWishes, clubStats, yearFor } from './extras.js'
+import { blogAction, writingFor, adminWriting, cronRefresh } from './blogs.js'
 import { yearImage } from './og.js'
 
 export function json(data, status = 200, cookies = []) {
@@ -19,6 +20,8 @@ export function json(data, status = 200, cookies = []) {
 export async function appResponse(request, context) {
   const { db } = context
   const fetch = context.fetch ?? globalThis.fetch
+  // Members' blogs are fetched through server/safe-fetch.js unless a test hands in its own.
+  const net = { fetch: context.fetch }
   const url = new URL(request.url)
   const route = url.searchParams.get('route')
   const method = request.method
@@ -49,7 +52,15 @@ export async function appResponse(request, context) {
 
     switch (`${method} ${route}`) {
       case 'GET me':
-        return json(member ? { ...(await myShelf(db, member)), lending: await lendingFor(db, member), wishes: await myWishes(db, member) } : { member: null })
+        return json(
+          member
+            ? { ...(await myShelf(db, member)), lending: await lendingFor(db, member), wishes: await myWishes(db, member), writing: await writingFor(db, member) }
+            : { member: null },
+        )
+      case 'POST blogs':
+        return json(await blogAction(db, signedIn(), body, net))
+      case 'GET blog-refresh':
+        return json(await cronRefresh(db, request, net))
       case 'POST wishes':
         return json({ wish: await addWish(db, signedIn(), body), wishes: await myWishes(db, member) }, 201)
       case 'DELETE wishes':
@@ -94,7 +105,7 @@ export async function appResponse(request, context) {
         return json(await myShelf(db, member))
       case 'GET admin':
         admin()
-        return json({ ...(await adminData(db)), ...(await adminCalendar(db)) })
+        return json({ ...(await adminData(db)), ...(await adminCalendar(db)), writing: await adminWriting(db) })
       case 'POST admin':
         if (CALENDAR_ACTIONS.has(body.action)) {
           admin()

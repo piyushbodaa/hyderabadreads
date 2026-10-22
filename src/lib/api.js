@@ -42,3 +42,14 @@ export async function copyText(text) {
 }
 
 export const whatsappLink = (text) => `https://wa.me/?text=${encodeURIComponent(text)}`
+
+// "5 minutes ago", "yesterday"…
+export function ago(iso) {
+  if (!iso) return 'not yet'
+  const minutes = Math.round((Date.now() - Date.parse(iso)) / 60000)
+  if (minutes < 1) return 'just now'
+  const say = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+  if (minutes < 60) return say.format(-minutes, 'minute')
+  if (minutes < 60 * 24) return say.format(-Math.round(minutes / 60), 'hour')
+  return say.format(-Math.round(minutes / 1440), 'day')
+}

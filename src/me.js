@@ -1,11 +1,12 @@
 // My shelf: where a signed-in member adds their books (search Open Library,
-// scan a barcode, or type it in), edits their notes, and tidies the shelf.
+// scan a barcode, or type it in), edits their notes, tidies the shelf, and
+// adds their blog to the club's blog.
 import '@fontsource-variable/fraunces/opsz.css'
 import '@fontsource-variable/inter'
 import './styles.css'
 import './lib/pwa.js'
 
-import { api, toaster, copyText } from './lib/api.js'
+import { api, toaster, copyText, ago } from './lib/api.js'
 import { escape } from './lib/render.js'
 import { GENRES, LANGUAGES } from './lib/genres.js'
 import { canScan, scanIsbn } from './lib/scan.js'
@@ -21,6 +22,7 @@ let me = null
 let books = []
 let lending = null
 let wishes = []
+let writing = { blogs: [], posts: [] }
 let results = []
 let searchTimer
 let searchSeq = 0
@@ -34,6 +36,7 @@ async function start() {
     books = data.books ?? []
     lending = data.lending ?? null
     wishes = data.wishes ?? []
+    writing = data.writing ?? writing
   } catch (err) {
     desk.innerHTML = `<div class="desk__head"><p class="kicker">My shelf</p><h1 class="desk__title">Something went wrong</h1>
       <p class="desk__lede">${escape(err.message)}</p></div>`
@@ -91,13 +94,25 @@ async function start() {
       <h2 id="wanted-title" class="panel__title">Looking for</h2>
       <p class="panel__lede">Books you’d like to read. They sit on the Wanted shelf, where anyone who has one can say so. Search above and tap <em>Want</em>.</p>
       <ul class="lends" data-wishes></ul>
+    </section>
+    <section class="panel" id="writing" aria-labelledby="writing-title">
+      <h2 id="writing-title" class="panel__title">Your blog</h2>
+      <p class="panel__lede">Write on Substack, Medium, WordPress or a site of your own? Add it here and your posts appear on <a href="/blog">the club’s blog</a>, each linking back to you. New ones show up by themselves within a day.</p>
+      <form class="addform addform--row" data-blog-form>
+        <label class="field"><span>Your blog’s address <small>any page on it will do</small></span><input class="input" name="url" required maxlength="500" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="yourname.substack.com" /></label>
+        <button class="btn btn--primary" type="submit">Add my blog</button>
+      </form>
+      <div class="blog-list" data-writing></div>
     </section>`
   renderSamples()
   renderLending()
   renderBooks()
   renderWishes()
+  renderWriting()
   wire()
   if (welcome) toast(`You’re signed in on this ${matchMedia('(pointer: coarse)').matches ? 'phone' : 'browser'}.`)
+  // "Add my blog" on /blog comes here; the section exists only now.
+  if (location.hash === '#writing') desk.querySelector('#writing').scrollIntoView()
 }
 
 function signedOut() {
@@ -233,6 +248,7 @@ function wire() {
     if (t.matches('[data-cancel-add]')) return t.closest('.addform').remove()
     if (t.matches('[data-samples-action]')) return samplesAction(t)
     if (t.matches('[data-loan-action]')) return loanAction(t, { action: t.dataset.loanAction, loan: Number(t.dataset.loan) })
+    if (t.matches('[data-blog-action]')) return blogButton(t)
     const item = t.closest('[data-id]')
     if (!item) return
     const book = books.find((b) => b.id === item.dataset.id)
@@ -260,6 +276,9 @@ function wire() {
     } else if (form.matches('[data-edit-form]')) {
       e.preventDefault()
       await saveEdit(form)
+    } else if (form.matches('[data-blog-form]')) {
+      e.preventDefault()
+      await addBlog(form)
     }
   })
 
@@ -531,6 +550,89 @@ async function unwant(button) {
     toast(err.message)
   }
 }
+
+// ── Your blog ─────────────────────────────────────────────────────────────
+
+function renderWriting() {
+  const { blogs, posts } = writing
+  desk.querySelector('[data-writing]').innerHTML = blogs.length
+    ? `<h3 class="lend__head">${blogs.length === 1 ? 'On the club’s blog' : 'Your blogs'}</h3>
+      <ul class="lends">${blogs.map(blogItem).join('')}</ul>
+      ${
+        posts.length
+          ? `<h3 class="lend__head">Your posts there</h3>
+        <p class="panel__lede">Hide any you’d rather not show on the club’s blog. They stay on your own.</p>
+        <ul class="lends">${posts
+          .map(
+            (p) => `
+          <li class="lend${p.hidden ? ' is-hidden' : ''}">
+            <p class="lend__text"><a href="${escape(p.url)}" target="_blank" rel="noopener">${escape(p.title)}</a><span class="lend__sub">${day(p.date)}${p.hidden ? ' · hidden' : ''}</span></p>
+            <div class="lend__actions"><button type="button" class="btn btn--ghost" data-blog-action="${p.hidden ? 'show' : 'hide'}" data-post="${p.id}">${p.hidden ? 'Show it' : 'Hide'}</button></div>
+          </li>`,
+          )
+          .join('')}</ul>`
+          : ''
+      }`
+    : ''
+}
+
+function blogItem(b) {
+  const name = b.title || new URL(b.home).hostname.replace(/^www\./, '')
+  return `
+    <li class="lend" data-blog="${b.id}">
+      <p class="lend__text"><a href="${escape(b.home)}" target="_blank" rel="noopener"><strong>${escape(name)}</strong></a>${b.platform ? ` · ${escape(b.platform)}` : ''}
+        <span class="lend__sub">${b.posts === 1 ? '1 post' : `${b.posts} posts`}${b.hidden ? `, ${b.hidden} hidden` : ''} · checked ${ago(b.checked)}</span>
+        ${b.error ? `<span class="lend__error">Last check: ${escape(b.error)}</span>` : ''}</p>
+      <div class="lend__actions" data-blog-actions>
+        <button type="button" class="btn btn--ghost" data-blog-action="check" data-blog-id="${b.id}">Check now</button>
+        <button type="button" class="btn btn--ghost" data-blog-action="ask-remove" data-blog-id="${b.id}">Remove</button>
+      </div>
+    </li>`
+}
+
+async function addBlog(form) {
+  const button = form.querySelector('[type=submit]')
+  button.disabled = true
+  button.textContent = 'Finding your posts…'
+  try {
+    const { writing: now, added } = await api('/api/blogs', { method: 'POST', body: { action: 'add', url: fields(form).url } })
+    writing = now
+    renderWriting()
+    form.reset()
+    toast(added.posts ? `Added, with ${added.posts === 1 ? 'one post' : `${added.posts} posts`}. They’re on the club’s blog now.` : 'Added. New posts will show up on the club’s blog.')
+  } catch (err) {
+    toast(err.message)
+  } finally {
+    button.disabled = false
+    button.textContent = 'Add my blog'
+  }
+}
+
+async function blogButton(button) {
+  const action = button.dataset.blogAction
+  if (action === 'ask-remove') {
+    button.closest('[data-blog-actions]').innerHTML = `
+      <span class="mybook__ask">Take it off the club’s blog?</span>
+      <button type="button" class="linkish linkish--danger" data-blog-action="remove" data-blog-id="${button.dataset.blogId}">Remove</button>
+      <button type="button" class="linkish" data-blog-action="keep">Keep it</button>`
+    return
+  }
+  if (action === 'keep') return renderWriting()
+  const body = action === 'hide' || action === 'show' ? { action, post: Number(button.dataset.post) } : { action, id: Number(button.dataset.blogId) }
+  button.disabled = true
+  if (action === 'check') button.textContent = 'Checking…'
+  try {
+    writing = (await api('/api/blogs', { method: 'POST', body })).writing
+    renderWriting()
+    toast({ check: 'Checked. Anything new is on the club’s blog.', remove: 'Your blog is off the club’s blog.', hide: 'Hidden from the club’s blog.', show: 'Back on the club’s blog.' }[action])
+  } catch (err) {
+    toast(err.message)
+    renderWriting()
+  }
+}
+
+const day = (iso) => new Date(`${iso}T00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+
 
 function htmlToNode(html) {
   const t = document.createElement('template')

@@ -1,11 +1,13 @@
 // Everything a visitor can see, in one round trip to the database: members,
-// books, this month's calendar onwards and the club's settings. Nothing
-// private goes in here: a book shows as on loan, but not who has it.
+// books, this month's calendar onwards, the club's settings and the newest
+// posts on the blog. Nothing private goes in here: a book shows as on loan,
+// but not who has it.
 import { PHOTOS_QUERY } from './photos.js'
 import { WISHES_QUERY } from './extras.js'
+import { LATEST_POSTS_QUERY, BLOGS_DUE_QUERY } from './blogs.js'
 
 export async function loadLibrary(db) {
-  const [members, books, meetups, settings, photos, wishes] = await db.batch([
+  const [members, books, meetups, settings, photos, wishes, posts, due] = await db.batch([
     [`SELECT name, slug FROM members WHERE removed_at IS NULL ORDER BY lower(name)`],
     [
       `SELECT b.slug AS id, b.title, b.author, b.genre, b.language, b.blurb, b.note, b.isbn, b.year, b.pages,
@@ -26,8 +28,20 @@ export async function loadLibrary(db) {
     [`SELECT key, value FROM settings`],
     [PHOTOS_QUERY],
     [WISHES_QUERY],
+    [LATEST_POSTS_QUERY],
+    [BLOGS_DUE_QUERY],
   ])
   const club = Object.fromEntries(settings.map((s) => [s.key, s.value]))
   for (const m of meetups) m.time ??= club.default_time ?? ''
-  return { members, books, meetups, club, photos: photos.map(({ id, ...p }) => p), wishes: wishes.map(({ id, ...w }) => w) }
+  return {
+    members,
+    books,
+    meetups,
+    club,
+    photos: photos.map(({ id, ...p }) => p),
+    wishes: wishes.map(({ id, ...w }) => w),
+    posts,
+    // A blog whose feed is more than an hour old (see server/handlers.js).
+    blogsDue: due[0].due,
+  }
 }

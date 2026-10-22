@@ -1,6 +1,7 @@
 // The library and calendar as plain files: llms.txt (a summary for AI
 // assistants, see llmstxt.org), llms-full.txt (every book and meetup in
-// Markdown), library.json, sitemap.xml, and meetups.ics for calendar apps.
+// Markdown), library.json, sitemap.xml, meetups.ics for calendar apps, and
+// the blog's posts as RSS (/blog/feed.xml).
 import { SITE, NAME, ABOUT, GITHUB, MEETUP_FORMAT, todayInIndia, meetupClock, longDate } from './site.js'
 
 const TYPES = {
@@ -9,10 +10,12 @@ const TYPES = {
   json: 'application/json; charset=utf-8',
   sitemap: 'application/xml; charset=utf-8',
   ics: 'text/calendar; charset=utf-8',
+  blog: 'application/rss+xml; charset=utf-8',
 }
 
+// `data` is the library (server/library.js), or for the blog, server/blogs.js's loadBlog.
 export function feed(kind, data, today = todayInIndia(), options = {}) {
-  const make = { llms, 'llms-full': llmsFull, json, sitemap, ics }[kind]
+  const make = { llms, 'llms-full': llmsFull, json, sitemap, ics, blog }[kind]
   return make ? { type: TYPES[kind], body: make(data, today, options) } : null
 }
 
@@ -55,6 +58,7 @@ function llms(data, today) {
 - [Calendar](${SITE}/#calendar): upcoming meetups, with venues and timings
 - [Readers](${SITE}/#readers): the members and what each one owns
 - Every book has its own page at ${SITE}/book/<id>${example ? `, for example [${example.title}](${bookUrl(example)})` : ''}, and every member’s shelf is at ${SITE}/shelf/<name>
+- [Blog](${SITE}/blog): what members write on Substack, Medium, WordPress and their own sites, newest first, linking to each post where it was published. Also as [RSS](${SITE}/blog/feed.xml)
 
 ## Community
 
@@ -104,7 +108,17 @@ ${rows.join('\n')}
 ${shelves(data)
   .map((m) => `### ${m.name} (${m.books.length} ${m.books.length === 1 ? 'book' : 'books'})\n\n${m.books.map(bookLine).join('\n')}`)
   .join('\n\n')}
+${
+  data.posts?.length
+    ? `
+## Latest writing by members
+
+All of it is at ${SITE}/blog.
+
+${data.posts.map((p) => `- **${p.title}** by ${p.writer} (${p.platform || 'their blog'}, ${p.date}).${p.excerpt ? ` ${p.excerpt}` : ''} [Read](${p.url})`).join('\n')}
 `
+    : ''
+}`
 }
 
 function json(data, today) {
@@ -135,6 +149,7 @@ function sitemap(data, today) {
     { loc: `${SITE}/`, lastmod: today },
     ...shelves(data).map((m) => ({ loc: `${SITE}/shelf/${m.slug}`, lastmod: m.books.map((b) => b.added).sort().at(-1) })),
     ...data.books.map((b) => ({ loc: bookUrl(b), lastmod: b.added })),
+    ...(data.posts?.length ? [{ loc: `${SITE}/blog`, lastmod: data.posts[0].date }] : []),
     { loc: `${SITE}/llms.txt`, lastmod: today },
   ]
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -183,6 +198,35 @@ function ics(data, today, { only } = {}) {
     'END:VCALENDAR',
   ]
   return lines.map(fold).join('\r\n') + '\r\n'
+}
+
+// The blog as one feed: every member's posts, each linking to where it was
+// published, with the blog it came from as its <source>.
+function blog(data) {
+  const x = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c])
+  const when = (iso) => new Date(iso).toUTCString()
+  const items = data.posts.slice(0, 50).map(
+    (p) => `    <item>
+      <title>${x(p.title)}</title>
+      <link>${x(p.url)}</link>
+      <guid isPermaLink="true">${x(p.url)}</guid>
+      <pubDate>${when(p.published)}</pubDate>
+      <dc:creator>${x(p.writer)}</dc:creator>${p.excerpt ? `\n      <description>${x(p.excerpt)}</description>` : ''}
+      <source url="${x(p.feed)}">${x(p.blog || `${p.writer}’s blog`)}</source>
+    </item>`,
+  )
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>${NAME}: writing by members</title>
+    <link>${SITE}/blog</link>
+    <atom:link href="${SITE}/blog/feed.xml" rel="self" type="application/rss+xml" />
+    <description>Essays, reviews and notes by members of the ${NAME} book club, from Substack, Medium, WordPress and their own sites.</description>
+    <language>en-IN</language>${data.posts.length ? `\n    <lastBuildDate>${when(data.posts[0].published)}</lastBuildDate>` : ''}
+${items.join('\n')}
+  </channel>
+</rss>
+`
 }
 
 // Lines longer than 75 bytes continue on the next line after a space.

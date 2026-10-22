@@ -24,10 +24,12 @@ export function serverPlugin({ dataDir = fileURLToPath(new URL('.data/pglite', r
   const devTemplates = (server) => async (url) => ({
     template: await server.transformIndexHtml(url, await readFile(new URL('index.html', root), 'utf8')),
     notFound: await server.transformIndexHtml('/404.html', await readFile(new URL('404.html', root), 'utf8')),
+    blogTemplate: await server.transformIndexHtml('/blog.html', await readFile(new URL('blog.html', root), 'utf8')),
   })
   const builtTemplates = async () => ({
     template: await readFile(new URL('server/generated/index.html', root), 'utf8'),
     notFound: await readFile(new URL('server/generated/404.html', root), 'utf8'),
+    blogTemplate: await readFile(new URL('server/generated/blog.html', root), 'utf8'),
   })
 
   const middleware = (templates) => async (req, res, next) => {

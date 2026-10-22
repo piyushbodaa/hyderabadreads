@@ -1,8 +1,9 @@
 // After `vite build`: the built index.html becomes the server's page template
-// (the home page, books and shelves are rendered by api/page.js), and the
-// built 404.html is kept for it too. dist/index.html has to go, or Vercel would
-// serve it as a static file instead of calling the function. Then the service
-// worker gets its list of files to save.
+// (the home page, books and shelves are rendered by api/page.js), and so does
+// blog.html (/blog); the built 404.html is kept for it too. dist/index.html and
+// dist/blog.html have to go, or Vercel would serve them as static files
+// instead of calling the function. Then the service worker gets its list of
+// files to save.
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
@@ -26,6 +27,11 @@ const template = html.replace('<!--hr:meta-->', `${preloads}\n    <!--hr:meta-->
 await writeFile(new URL('index.html', out), template)
 await rm(new URL('index.html', dist))
 await copyFile(new URL('404.html', dist), new URL('404.html', out))
+// The blog has no italics to load ahead.
+const blog = await readFile(new URL('blog.html', dist), 'utf8')
+if (!blog.includes('<!--hr:meta-->') || !blog.includes('<!--hr:blog-->')) throw new Error('[build] blog.html has no <!--hr:meta--> or <!--hr:blog--> marker')
+await writeFile(new URL('blog.html', out), blog.replace('<!--hr:meta-->', `${preloads.split('\n').filter((l) => !l.includes('italic')).join('\n')}\n    <!--hr:meta-->`))
+await rm(new URL('blog.html', dist))
 console.log('[build] page templates written to server/generated/')
 
 // The service worker saves the home page's own files (scripts, styles, fonts,

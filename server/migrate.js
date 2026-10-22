@@ -157,6 +157,47 @@ export const MIGRATIONS = [
       )`,
     ],
   },
+  {
+    id: 6,
+    name: 'blogs',
+    statements: [
+      // Members' blogs elsewhere (Substack, Medium, WordPress…), read from their feeds.
+      `CREATE TABLE IF NOT EXISTS blogs (
+        id serial PRIMARY KEY,
+        member_id int NOT NULL REFERENCES members (id),
+        feed_url text NOT NULL,
+        home_url text NOT NULL,
+        title text NOT NULL DEFAULT '',
+        platform text NOT NULL DEFAULT '',
+        added_at timestamptz NOT NULL DEFAULT now(),
+        checked_at timestamptz,
+        ok_at timestamptz,
+        error text,
+        removed_at timestamptz
+      )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS blogs_feed ON blogs (lower(feed_url)) WHERE removed_at IS NULL`,
+      // Their posts: a link back, with the title, a short excerpt and a picture
+      // (saved in media, from image_src; '' when it couldn't be had).
+      `CREATE TABLE IF NOT EXISTS posts (
+        id serial PRIMARY KEY,
+        blog_id int NOT NULL REFERENCES blogs (id),
+        guid text NOT NULL,
+        url text NOT NULL,
+        title text NOT NULL,
+        excerpt text NOT NULL DEFAULT '',
+        words int,
+        image text,
+        image_w int,
+        image_h int,
+        image_src text,
+        published_at timestamptz NOT NULL,
+        added_at timestamptz NOT NULL DEFAULT now(),
+        hidden boolean NOT NULL DEFAULT false
+      )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS posts_guid ON posts (blog_id, guid)`,
+      `CREATE INDEX IF NOT EXISTS posts_published ON posts (published_at DESC)`,
+    ],
+  },
 ]
 
 export async function migrate(db, { seed = true } = {}) {

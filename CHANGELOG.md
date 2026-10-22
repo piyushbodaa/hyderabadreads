@@ -2,6 +2,17 @@
 
 What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first. Every change now arrives as a pull request. The [closed pull requests](https://github.com/piyushbodaa/hyderabadreads/pulls?q=is%3Apr+is%3Aclosed) have the full detail, with screenshots.
 
+## 2026-10-22
+
+### The club's blog
+
+- A new **Blog** page, [/blog](https://hyderabadreads.fun/blog), gathers what members write on Substack, Medium, WordPress, Blogger, Ghost or their own sites. Each post shows its picture, title, opening lines, writer and reading time, and opens where it was published.
+- Members add their blog under **My shelf → Your blog**. Any address on it works, even a post's share link. Admins can add one for any member under **Admin → Blogs**.
+- New posts arrive by themselves. Feeds are read once a day, and again whenever someone visits with a feed more than an hour old. **Check now** reads a blog straight away.
+- Writers can hide any post from the club's blog. It stays on their own.
+- The home page shows the three newest posts, under Readers. The whole blog is one RSS feed at [/blog/feed.xml](https://hyderabadreads.fun/blog/feed.xml).
+- The header fits on one line at tablet widths again. Between phone and laptop sizes, Readers and GitHub move down to the page and footer, and the button says **Add books**.
+
 ## 2026-10-21
 
 ### Pick the home page books, and turn them over

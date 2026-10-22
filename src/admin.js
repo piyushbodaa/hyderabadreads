@@ -1,11 +1,12 @@
 // Admin: the club's members, and their personal sign-in links. More of the
-// club's housekeeping (the calendar, the newcomer details) lands here too.
+// club's housekeeping (the calendar, the newcomer details, members' blogs)
+// lands here too.
 import '@fontsource-variable/fraunces/opsz.css'
 import '@fontsource-variable/inter'
 import './styles.css'
 import './lib/pwa.js'
 
-import { api, toaster, copyText, whatsappLink } from './lib/api.js'
+import { api, toaster, copyText, whatsappLink, ago } from './lib/api.js'
 import { escape } from './lib/render.js'
 import { hash } from './lib/model.js'
 
@@ -13,6 +14,7 @@ const desk = document.querySelector('[data-desk]')
 const toast = toaster(document.querySelector('[data-toast]'))
 let members = []
 let calendar = { meetups: [], venues: [], settings: {} }
+let writing = { blogs: [], posts: [] }
 const picked = new Set()
 
 start()
@@ -35,7 +37,7 @@ async function start() {
         <a href="/digest">This week’s digest</a> is ready to post too.
       </p>
       <nav class="jump" aria-label="Admin sections">
-        <a href="#members">Members</a><a href="#calendar">Calendar</a><a href="#venues">Venues</a><a href="#club">Club details</a><a href="#photos">Photos</a>
+        <a href="#members">Members</a><a href="#blogs">Blogs</a><a href="#calendar">Calendar</a><a href="#venues">Venues</a><a href="#club">Club details</a><a href="#photos">Photos</a>
       </nav>
     </div>
     <section class="panel" id="members" aria-labelledby="new-title">
@@ -49,6 +51,16 @@ async function start() {
     <section class="panel" aria-labelledby="list-title">
       <h2 id="list-title" class="panel__title" data-count>Members</h2>
       <ul class="people" data-people></ul>
+    </section>
+    <section class="panel" id="blogs" aria-labelledby="blogs-title">
+      <h2 id="blogs-title" class="panel__title">Blogs</h2>
+      <p class="panel__lede">Members’ blogs on <a href="/blog">the club’s blog</a>. Members add their own on My shelf, or add one for them here: any page on their Substack, Medium, WordPress or own site will do.</p>
+      <form class="addform addform--blog" data-add-blog>
+        <label class="field"><span>Member</span><select class="input" name="member" required data-blog-member></select></label>
+        <label class="field"><span>Their blog’s address</span><input class="input" name="url" required maxlength="500" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="yourname.substack.com" /></label>
+        <button class="btn btn--primary" type="submit">Add blog</button>
+      </form>
+      <div class="blog-list" data-admin-blogs></div>
     </section>
     <section class="panel" id="calendar" aria-labelledby="cal-title">
       <h2 id="cal-title" class="panel__title">Calendar</h2>
@@ -118,6 +130,7 @@ async function start() {
     </section>`
   wire()
   wireCalendar()
+  wireBlogs()
   await load()
 }
 
@@ -130,9 +143,11 @@ async function load() {
   const data = await api('/api/admin')
   members = data.members
   calendar = data
+  writing = data.writing
   desk.querySelector('[data-count]').textContent = `Members (${members.length})`
   desk.querySelector('[data-people]').innerHTML = members.map(person).join('')
   renderCalendar()
+  renderBlogs()
 }
 
 function status(m) {
@@ -421,6 +436,95 @@ function wireCalendar() {
       await load()
     } catch (err) {
       toast(err.message)
+    }
+  })
+}
+
+// ── Blogs ─────────────────────────────────────────────────────────────────
+
+function renderBlogs() {
+  const select = desk.querySelector('[data-blog-member]')
+  const chosen = select.value
+  select.innerHTML = `<option value="">Choose…</option>${members.map((m) => `<option value="${escape(m.slug)}"${m.slug === chosen ? ' selected' : ''}>${escape(m.name)}</option>`).join('')}`
+  const { blogs, posts } = writing
+  desk.querySelector('[data-admin-blogs]').innerHTML = blogs.length
+    ? `<h3 class="lend__head">On the blog</h3>
+      <ul class="lends">${blogs
+        .map(
+          (b) => `
+        <li class="lend" data-admin-blog="${b.id}">
+          <p class="lend__text"><strong>${escape(b.writer)}</strong> · <a href="${escape(b.home)}" target="_blank" rel="noopener">${escape(b.title || new URL(b.home).hostname)}</a>${b.platform ? ` · ${escape(b.platform)}` : ''}
+            <span class="lend__sub">${b.posts === 1 ? '1 post' : `${b.posts} posts`}${b.hidden ? `, ${b.hidden} hidden` : ''} · checked ${ago(b.checked)}</span>
+            ${b.error ? `<span class="lend__error">Last check: ${escape(b.error)}</span>` : ''}</p>
+          <div class="lend__actions" data-blog-actions>
+            <button type="button" class="btn btn--ghost" data-blog="check">Check now</button>
+            <button type="button" class="btn btn--ghost" data-blog="ask-remove">Remove</button>
+          </div>
+        </li>`,
+        )
+        .join('')}</ul>
+      ${
+        posts.length
+          ? `<h3 class="lend__head">Latest posts</h3>
+        <ul class="lends">${posts
+          .map(
+            (p) => `
+          <li class="lend${p.hidden ? ' is-hidden' : ''}" data-admin-post="${p.id}">
+            <p class="lend__text"><a href="${escape(p.url)}" target="_blank" rel="noopener">${escape(p.title)}</a><span class="lend__sub">${escape(p.writer)} · ${pretty(p.date)}${p.hidden ? ' · hidden' : ''}</span></p>
+            <div class="lend__actions"><button type="button" class="btn btn--ghost" data-blog="${p.hidden ? 'show' : 'hide'}">${p.hidden ? 'Show it' : 'Hide'}</button></div>
+          </li>`,
+          )
+          .join('')}</ul>`
+          : ''
+      }`
+    : '<p class="results__note">No blogs yet.</p>'
+}
+
+function wireBlogs() {
+  desk.querySelector('[data-add-blog]').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const form = e.target
+    const button = form.querySelector('[type=submit]')
+    const { member, url } = Object.fromEntries(new FormData(form))
+    button.disabled = true
+    button.textContent = 'Finding the posts…'
+    try {
+      const { added } = await api('/api/blogs', { method: 'POST', body: { action: 'add', member, url } })
+      form.reset()
+      const name = members.find((m) => m.slug === member)?.name
+      toast(`${name ? `${name}’s blog` : 'The blog'} is on the club’s blog, with ${added.posts === 1 ? 'one post' : `${added.posts} posts`}.`)
+      await load()
+    } catch (err) {
+      toast(err.message)
+    } finally {
+      button.disabled = false
+      button.textContent = 'Add blog'
+    }
+  })
+
+  desk.querySelector('[data-admin-blogs]').addEventListener('click', async (e) => {
+    const t = e.target.closest('button[data-blog]')
+    if (!t) return
+    const action = t.dataset.blog
+    const blog = Number(t.closest('[data-admin-blog]')?.dataset.adminBlog)
+    const post = Number(t.closest('[data-admin-post]')?.dataset.adminPost)
+    if (action === 'ask-remove') {
+      t.closest('[data-blog-actions]').innerHTML = `
+        <span class="mybook__ask">Take it off the club’s blog?</span>
+        <button type="button" class="linkish linkish--danger" data-blog="remove">Remove</button>
+        <button type="button" class="linkish" data-blog="keep">Keep it</button>`
+      return
+    }
+    if (action === 'keep') return renderBlogs()
+    t.disabled = true
+    if (action === 'check') t.textContent = 'Checking…'
+    try {
+      await api('/api/blogs', { method: 'POST', body: action === 'hide' || action === 'show' ? { action, post } : { action, id: blog } })
+      toast({ check: 'Checked.', remove: 'Blog removed.', hide: 'Hidden from the club’s blog.', show: 'Back on the club’s blog.' }[action])
+      await load()
+    } catch (err) {
+      toast(err.message)
+      renderBlogs()
     }
   })
 }

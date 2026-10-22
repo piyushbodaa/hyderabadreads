@@ -14,6 +14,7 @@
     <link rel="alternate" type="text/markdown" href="/llms-full.txt" title="Full catalogue and calendar" />
     <link rel="alternate" type="application/json" href="/library.json" title="Catalogue as JSON" />
     <link rel="alternate" type="text/calendar" href="/meetups.ics" title="Meetup calendar" />
+    <link rel="alternate" type="application/rss+xml" href="/blog/feed.xml" title="Hyderabad Reads: writing by members" />
     <!-- The server (server/page.js) replaces everything between these markers
          with the title, description and link preview for the page being shown:
          the home page, a book or a member's shelf. These are the home page's. -->
@@ -72,7 +73,8 @@
       <nav class="topnav" aria-label="Sections">
         <a href="#library">Library</a>
         <a href="#calendar">Calendar</a>
-        <a href="#readers">Readers</a>
+        <a href="#readers" class="topnav__readers">Readers</a>
+        <a href="/blog">Blog</a>
         <a href="#calendar" class="topnav__icon topnav__cal" aria-label="Next meetup and calendar">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
         </a>
@@ -181,6 +183,9 @@
         <ul class="reader-grid" data-readers></ul>
       </section>
 
+      <!-- The newest posts from members' blogs, when there are any (server/page.js). -->
+      <!--hr:writing-->
+
       <section id="join" class="join" aria-labelledby="join-title">
         <div class="join__card">
           <h2 id="join-title" class="section-title">Put your books on the shelf</h2>
@@ -227,6 +232,7 @@
       </p>
       <p class="footer__links footer__links--small">
         <a href="/stats">The club in numbers</a>
+        <a href="/blog">The club’s blog</a>
         <a href="/meetups.ics">Meetup calendar feed</a>
       </p>
       <p>Made with chai in Hyderabad. Anyone can contribute.</p>

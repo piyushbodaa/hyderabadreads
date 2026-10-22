@@ -187,7 +187,10 @@ function currentFilter() {
 }
 function selectFacet(key) {
   const group = key ? facetGroups.find((g) => g.key === key) : null
-  state.facet = group ? { key: group.key, ids: new Set(group.books.map((b) => b.id)) } : null
+  // A member with no books yet has no shelf or chip, but their shelf still
+  // opens from Readers or /shelf/name: empty, saying how to fill it.
+  const waiting = !group && bookcase.arrange === 'reader' && readerList.some((r) => r.name === key && !r.books.length)
+  state.facet = group ? { key: group.key, ids: new Set(group.books.map((b) => b.id)) } : waiting ? { key, ids: new Set() } : null
   chips.querySelectorAll('.chip[data-key]').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.key === (state.facet?.key ?? ''))))
   applyFilter()
 }
@@ -213,16 +216,9 @@ const frame = $('.bookcase-frame')
 function renderCovers() {
   const byMember = bookcase.arrange === 'reader'
   const groups = bookcase.groups()
-  // Members with no books yet, together at the end: each name opens their shelf.
-  const waiting = groups.filter((g) => g.empty)
-  const waitingHTML = waiting.length
-    ? `<section class="covers__group covers__waiting"><h3 class="covers__head">Empty shelves, waiting for books</h3>
-        <p>${waiting.map((g) => `<a href="/shelf/${escape(g.slug)}" style="--dot:${g.colour}"><i></i>${escape(g.label)}</a>`).join('')}</p></section>`
-    : ''
   // With nothing to show, the shelves' message (which sits on the shelves) comes here too.
   if (!groups.length) return void (coversEl.innerHTML = `<p class="covers__none">${emptyEl.innerHTML}</p>`)
   coversEl.innerHTML = groups
-    .filter((g) => !g.empty)
     .map(
       (g) => `
       <section class="covers__group">
@@ -230,7 +226,7 @@ function renderCovers() {
         <div class="covers__grid">${g.books.map((b) => coverCard(b, byMember, g.sample)).join('')}</div>
       </section>`,
     )
-    .join('') + waitingHTML
+    .join('')
   emptyEl.hidden = bookcase.order.length > 0
 }
 // Under each cover: the writer when the heading already names the member,

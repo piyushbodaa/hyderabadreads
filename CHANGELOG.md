@@ -4,6 +4,11 @@ What's changed on [hyderabadreads.fun](https://hyderabadreads.fun), newest first
 
 ## 2026-10-22
 
+### Only shelves with books
+
+- The shelves and the covers view now show only the members who have added books. The empty spaces are gone, and so are the chips with nothing behind them.
+- Readers, further down, still lists every member. Tapping someone with no books yet, or opening their link (for example /shelf/aakansha), still says their shelf is empty and how to fill it.
+
 ### The club's blog
 
 - A new **Blog** page, [/blog](https://hyderabadreads.fun/blog), gathers what members write on Substack, Medium, WordPress, Blogger, Ghost or their own sites. Each post shows its picture, title, opening lines, writer and reading time, and opens where it was published.

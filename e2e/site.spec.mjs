@@ -53,6 +53,28 @@ test('nothing makes the page scroll sideways', async ({ page }) => {
   expect(scrollWidth).toBeLessThanOrEqual(innerWidth)
 })
 
+test('a member with no books has no shelf, but Readers lists them and says how to fill it', async ({ page }, testInfo) => {
+  // Local only: sign in as a member (each size its own), and clear their sample books.
+  const name = testInfo.project.name === 'phone' ? 'Vamshi' : 'Taraka'
+  const link = (await (await page.request.get(`/__dev/invite?name=${name}`)).text()).trim()
+  await page.goto(new URL(link).pathname)
+  const cleared = await page.request.post('/api/shelf', { data: { action: 'clear-samples' }, headers: { Origin: new URL(page.url()).origin } })
+  expect(cleared.ok()).toBe(true)
+
+  await page.goto('/')
+  await expect(page.locator('[data-bookcase] .book').first()).toBeAttached()
+  await expect(page.locator(`[data-chips] .chip[data-key="${name}"]`)).toHaveCount(0)
+  await expect(page.locator('[data-bookcase] .plate', { hasText: name })).toHaveCount(0)
+  const card = page.locator(`[data-readers] .reader[data-reader="${name}"]`)
+  await expect(card).toContainText('Shelf empty for now')
+  await card.click()
+  await expect(page.locator('[data-result-count]')).toHaveText(`Nothing on ${name}’s shelf yet`)
+  await expect(page.locator('[data-empty]')).toContainText(`${name}’s shelf is empty for now`)
+
+  await page.goto(`/shelf/${name.toLowerCase()}`)
+  await expect(page.locator('[data-result-count]')).toHaveText(`Nothing on ${name}’s shelf yet`)
+})
+
 test('the blog has its own page, which nothing makes scroll sideways', async ({ page }) => {
   const response = await page.goto('/blog')
   expect(response.status()).toBe(200)

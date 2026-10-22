@@ -13,8 +13,6 @@ const PLANK = 24
 const PAD = 22
 const GAP = 2
 const GROUP_GAP = 40
-// A member who hasn't added books yet keeps a space on the shelves this wide.
-const EMPTY_W = 92
 const LABEL_FONT = '600 10px "Inter Variable", system-ui, sans-serif'
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)')
@@ -61,7 +59,6 @@ export class Bookcase {
     this.current = null
     this.els = new Map()
     this.labels = new Map()
-    this.slots = new Map()
     this.shelves = []
     this.decor = []
     this.measure = document.createElement('canvas').getContext('2d')
@@ -219,16 +216,14 @@ export class Bookcase {
 
     // A member whose books are all placeholders gets a muted plate. Words on
     // the plate would widen it, and phones would fit one shelf per row, not two.
-    const members = readerList.map((r) => {
-      const list = visible.filter((b) => b.owner === r.name)
-      const sample = list.length > 0 && list.every((b) => b.sample)
-      return { key: r.name, label: r.name, slug: r.slug, sample, colour: `hsl(${r.hue} 55% 70%)`, books: list }
-    })
-    const shelved = members.filter((g) => g.books.length)
-    // With nothing filtered, members who haven't added books yet keep an empty
-    // space after everyone else's shelves, so the club sees whose is waiting.
-    if (visible.length < books.length) return shelved
-    return [...shelved, ...members.filter((g) => !g.books.length).map((g) => ({ ...g, empty: true }))]
+    // Members with no books yet have no shelf here; Readers lists everyone.
+    return readerList
+      .map((r) => {
+        const list = visible.filter((b) => b.owner === r.name)
+        const sample = list.length > 0 && list.every((b) => b.sample)
+        return { key: r.name, label: r.name, sample, colour: `hsl(${r.hue} 55% 70%)`, books: list }
+      })
+      .filter((g) => g.books.length)
   }
 
   layout({ cascade = false } = {}) {
@@ -246,7 +241,6 @@ export class Bookcase {
     this.root.style.setProperty('--plank', `${PLANK * s}px`)
 
     const placed = []
-    const empties = []
     const labels = []
     const rowEnds = []
     let row = 0
@@ -254,7 +248,7 @@ export class Bookcase {
 
     for (const group of this.groups()) {
       const widths = group.books.map((b) => b.t * s)
-      const booksW = group.empty ? EMPTY_W * s : widths.reduce((sum, w) => sum + w + GAP, -GAP)
+      const booksW = widths.reduce((sum, w) => sum + w + GAP, -GAP)
       const labelW = group.label ? this.labelWidth(group) : 0
       const slotW = Math.max(booksW, labelW)
       if (x > pad && x + Math.min(slotW, right - pad) > right) {
@@ -263,10 +257,6 @@ export class Bookcase {
       }
       const label = group.label && { group, x, row, w: Math.min(slotW, right - x) }
       let bx = x + Math.max(0, (Math.min(slotW, right - x) - booksW) / 2)
-      if (group.empty) {
-        empties.push({ group, x: bx, row, w: booksW })
-        bx += booksW + GAP
-      }
       group.books.forEach((book, i) => {
         if (bx + widths[i] > right) {
           rowEnds[row++] = bx
@@ -279,7 +269,7 @@ export class Bookcase {
       x = Math.max(bx - GAP, label && label.row === row ? label.x + label.w : 0) + gap
     }
     rowEnds[row] = x - gap
-    const rows = placed.length || empties.length ? row + 1 : 0
+    const rows = placed.length ? row + 1 : 0
 
     // Books
     const visible = new Set()
@@ -343,30 +333,6 @@ export class Bookcase {
       el.classList.remove('is-gone')
     }
     for (const [key, el] of this.labels) if (!seen.has(key)) el.classList.add('is-gone')
-
-    // Empty spaces, each a link to that member's shelf. Not Tab stops: the
-    // chips and the readers below reach the same shelves.
-    const slotH = MAX_SPINE_HEIGHT * 0.62 * s
-    const shown = new Set()
-    for (const { group, x: ex, row: r, w } of empties) {
-      shown.add(group.key)
-      let el = this.slots.get(group.key)
-      if (!el) {
-        el = document.createElement('a')
-        el.className = 'shelf-slot'
-        el.tabIndex = -1
-        el.innerHTML = '<span aria-hidden="true">Empty</span>'
-        this.root.append(el)
-        this.slots.set(group.key, el)
-      }
-      el.href = `/shelf/${group.slug}`
-      el.setAttribute('aria-label', `${group.label}’s shelf is empty for now`)
-      el.style.width = `${w.toFixed(1)}px`
-      el.style.height = `${slotH.toFixed(1)}px`
-      el.style.transform = `translate3d(${ex.toFixed(1)}px, ${(r * rowH + plankTop - slotH).toFixed(1)}px, 0)`
-      el.classList.remove('is-gone')
-    }
-    for (const [key, el] of this.slots) if (!shown.has(key)) el.classList.add('is-gone')
 
     // Ornaments in the leftover space at the end of a row
     this.decor.forEach((d) => d.remove())

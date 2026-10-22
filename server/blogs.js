@@ -17,6 +17,10 @@ const KEEP = 30 // newest posts kept from each reading of a feed
 const PICTURES = 20 // newest posts per blog that get their picture saved
 const FEED_TYPES = 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5'
 const STALE = `checked_at IS NULL OR checked_at < now() - interval '1 hour'`
+// Reading feeds and their pictures stops starting new work after this long,
+// well inside the functions' 60 seconds (vercel.json). What's left waits for
+// the next reading.
+const BUDGET = 40000
 
 // ── What visitors see ─────────────────────────────────────────────────────
 
@@ -63,7 +67,7 @@ export async function blogAction(db, member, input, net = {}) {
         [`UPDATE posts SET image = NULL WHERE blog_id = $1 AND image = ''`, [blog.id]],
         ['UPDATE blogs SET checked_at = now() WHERE id = $1', [blog.id]],
       ])
-      await readBlog(db, blog, net)
+      await readBlog(db, blog, net, Date.now() + BUDGET)
       break
     }
     case 'remove': {
@@ -126,6 +130,7 @@ const BLOG_FIELDS = `b.id, b.title, b.platform, b.home_url AS home, b.feed_url A
 
 // A member adds their own blog; an admin can add one for anyone.
 export async function addBlog(db, actor, input, net = {}) {
+  const deadline = Date.now() + BUDGET
   let member = actor
   if (input.member && input.member !== actor.slug) {
     if (!actor.isAdmin) throw new Problem(403, 'You can only add your own blog.')
@@ -149,7 +154,7 @@ export async function addBlog(db, actor, input, net = {}) {
   )
   if (!blog) throw new Problem(409, 'That blog is on the site already.')
   // The newest pictures now; the rest arrive with the next reading.
-  await savePosts(db, blog.id, feed.posts, net, 6)
+  await savePosts(db, blog.id, feed.posts, net, deadline)
   return { id: blog.id, posts: Math.min(feed.posts.length, KEEP) }
 }
 
@@ -175,9 +180,10 @@ function blogTitle(title) {
 // ── Reading feeds ─────────────────────────────────────────────────────────
 
 // Blogs whose feed hasn't been read for an hour, a few at a time. Each one is
-// claimed first, so two pages showing at once don't both read it.
-export async function refreshDue(db, net = {}, { all = false, budgetMs = 40000 } = {}) {
-  const started = Date.now()
+// claimed first, so two pages showing at once don't both read it. With `all`
+// (the daily run), more rounds follow while there's time for one.
+export async function refreshDue(db, net = {}, { all = false, budgetMs = BUDGET } = {}) {
+  const deadline = Date.now() + budgetMs
   let read = 0
   do {
     const claimed = await db.query(
@@ -187,9 +193,9 @@ export async function refreshDue(db, net = {}, { all = false, budgetMs = 40000 }
        RETURNING id, feed_url`,
     )
     if (!claimed.length) break
-    await Promise.all(claimed.map((blog) => readBlog(db, blog, net)))
+    await Promise.all(claimed.map((blog) => readBlog(db, blog, net, deadline)))
     read += claimed.length
-  } while (all && Date.now() - started < budgetMs)
+  } while (all && deadline - Date.now() > 15000)
   return { read }
 }
 
@@ -201,23 +207,23 @@ export async function cronRefresh(db, request, net = {}) {
   return refreshDue(db, net, { all: true })
 }
 
-async function readBlog(db, blog, net) {
+async function readBlog(db, blog, net, deadline) {
   try {
-    const { url, body } = await fetchPublic(blog.feed_url, { ...net, accept: FEED_TYPES })
+    const { url, body } = await fetchPublic(blog.feed_url, { ...net, accept: FEED_TYPES, timeout: Math.max(1000, Math.min(10000, deadline - Date.now())) })
     const feed = parseFeed(body.toString('utf8'), url.href)
     if (!feed) throw new Problem(502, 'The blog’s address answered, but not with its posts.')
     await db.query(
       `UPDATE blogs SET title = COALESCE(NULLIF($2, ''), title), home_url = COALESCE($3, home_url), ok_at = now(), error = NULL WHERE id = $1`,
       [blog.id, blogTitle(feed.title), feed.link],
     )
-    await savePosts(db, blog.id, feed.posts, net)
+    await savePosts(db, blog.id, feed.posts, net, deadline)
   } catch (err) {
     if (!(err instanceof Problem)) console.error(err)
     await db.query('UPDATE blogs SET error = $2 WHERE id = $1', [blog.id, err instanceof Problem ? err.message : 'Couldn’t read the blog just now.'])
   }
 }
 
-async function savePosts(db, blogId, posts, net, pictures = 6) {
+async function savePosts(db, blogId, posts, net, deadline) {
   const fresh = posts.slice(0, KEEP)
   if (fresh.length) {
     // A post whose picture changed gets the new one.
@@ -233,32 +239,33 @@ async function savePosts(db, blogId, posts, net, pictures = 6) {
       ]),
     )
   }
-  await savePictures(db, blogId, net, pictures)
+  await savePictures(db, blogId, net, deadline)
 }
 
 // Each post's picture, made into a 1000px WebP in the media table, so pages
-// never load anything from other sites. One that can't be had is marked '',
-// and the post gets a quote instead.
-async function savePictures(db, blogId, net, limit) {
+// never load anything from other sites: up to six at a reading, three at a
+// time, while there's time. One that can't be had is marked '', and the post
+// gets a quote instead; one whose site didn't answer is tried again next time.
+async function savePictures(db, blogId, net, deadline) {
   const due = await db.query(
     `SELECT id, image_src AS src FROM (
        SELECT id, image, image_src, published_at FROM posts WHERE blog_id = $1 ORDER BY published_at DESC LIMIT ${PICTURES}
-     ) p WHERE image IS NULL AND image_src IS NOT NULL ORDER BY published_at DESC LIMIT $2`,
-    [blogId, limit],
+     ) p WHERE image IS NULL AND image_src IS NOT NULL ORDER BY published_at DESC LIMIT 6`,
+    [blogId],
   )
-  for (let i = 0; i < due.length; i += 3) {
+  for (let i = 0; i < due.length && deadline - Date.now() > 3000; i += 3) {
     await Promise.all(
       due.slice(i, i + 3).map(async (post) => {
-        const saved = await picture(db, post.src, net)
-        await db.query('UPDATE posts SET image = $2, image_w = $3, image_h = $4 WHERE id = $1', [post.id, saved.path, saved.width, saved.height])
+        const saved = await picture(db, post.src, net, Math.min(12000, deadline - Date.now()))
+        if (saved) await db.query('UPDATE posts SET image = $2, image_w = $3, image_h = $4 WHERE id = $1', [post.id, saved.path, saved.width, saved.height])
       }),
     )
   }
 }
 
-async function picture(db, src, net) {
+async function picture(db, src, net, timeout) {
   try {
-    const { body } = await fetchPublic(src, { ...net, accept: 'image/webp,image/jpeg,image/png,image/*;q=0.8', maxBytes: 8e6, timeout: 12000 })
+    const { body } = await fetchPublic(src, { ...net, accept: 'image/webp,image/jpeg,image/png,image/*;q=0.8', maxBytes: 8e6, timeout })
     const { data, info } = await sharp(body, { limitInputPixels: 50e6 })
       .rotate()
       .resize({ width: 1000, withoutEnlargement: true })
@@ -267,7 +274,7 @@ async function picture(db, src, net) {
     // Icons and logos aren't a post's picture.
     if (info.width < 200 || info.height < 120) return { path: '', width: null, height: null }
     return { path: await storeMedia(db, { bytes: data, width: info.width, height: info.height }), width: info.width, height: info.height }
-  } catch {
-    return { path: '', width: null, height: null }
+  } catch (err) {
+    return err?.transient ? null : { path: '', width: null, height: null }
   }
 }

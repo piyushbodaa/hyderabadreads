@@ -23,7 +23,8 @@ export async function fetchPublic(href, { fetch = publicFetch, accept = '*/*', m
     try {
       res = await fetch(url.href, { redirect: 'manual', headers: { 'User-Agent': USER_AGENT, Accept: accept }, signal: AbortSignal.timeout(timeout) })
     } catch (err) {
-      throw new Problem(502, unreachable(url, err))
+      // Worth trying again later, unlike an address that answers with an error.
+      throw Object.assign(new Problem(502, unreachable(url, err)), { transient: true })
     }
     const to = res.headers.get('location')
     if (res.status >= 300 && res.status < 400 && to) {

@@ -275,6 +275,33 @@ test('feeds an hour old are read again; a blog that’s down keeps its posts and
   down.clear()
 })
 
+test('reading stops in time, and pictures that didn’t come are tried again later', async () => {
+  const guide = `SELECT image FROM posts WHERE url = 'https://chai.wordpress.com/2026/10/01/the-guide/'`
+  const stale = () => db.query(`UPDATE blogs SET checked_at = now() - interval '2 hours'`)
+  await db.query(`UPDATE posts SET image = NULL WHERE url = 'https://chai.wordpress.com/2026/10/01/the-guide/'`)
+  // Out of time before the pictures: still to do, not "no picture".
+  await stale()
+  assert.deepEqual(await refreshDue(db, { fetch: fakeFetch }, { budgetMs: 1 }), { read: 2 })
+  assert.equal((await db.one(guide)).image, null)
+  // The picture's site doesn't answer: the same.
+  down.add('https://chai.files.wordpress.com/2026/10/guide.jpg')
+  await stale()
+  await refreshDue(db, { fetch: fakeFetch })
+  assert.equal((await db.one(guide)).image, null)
+  down.clear()
+  // Next time it comes.
+  await stale()
+  await refreshDue(db, { fetch: fakeFetch })
+  assert.match((await db.one(guide)).image, /^\/media\//)
+  // A picture that answers with an error is given up on, so it isn't asked for every hour.
+  web.set('https://chai.files.wordpress.com/2026/10/guide.jpg', ['text/html', '<html>not a picture</html>'])
+  await db.query(`UPDATE posts SET image = NULL WHERE url = 'https://chai.wordpress.com/2026/10/01/the-guide/'`)
+  await stale()
+  await refreshDue(db, { fetch: fakeFetch })
+  assert.equal((await db.one(guide)).image, '')
+  web.set('https://chai.files.wordpress.com/2026/10/guide.jpg', ['image/jpeg', picture])
+})
+
 test('the daily run needs the cron secret when there is one', async () => {
   process.env.CRON_SECRET = 'shh'
   try {

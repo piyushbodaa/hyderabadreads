@@ -283,12 +283,18 @@ test('reading stops in time, and pictures that didn’t come are tried again lat
   await stale()
   assert.deepEqual(await refreshDue(db, { fetch: fakeFetch }, { budgetMs: 1 }), { read: 2 })
   assert.equal((await db.one(guide)).image, null)
-  // The picture's site doesn't answer: the same.
+  // The picture's site doesn't answer, or drops the connection half way: the same.
   down.add('https://chai.files.wordpress.com/2026/10/guide.jpg')
   await stale()
   await refreshDue(db, { fetch: fakeFetch })
   assert.equal((await db.one(guide)).image, null)
   down.clear()
+  const dropped = () => new Response(new ReadableStream({ start: (c) => (c.enqueue(new Uint8Array([0xff, 0xd8])), c.error(new Error('connection reset'))) }))
+  const flaky = async (url) => (url.endsWith('guide.jpg') ? dropped() : fakeFetch(url))
+  await assert.rejects(fetchPublic('https://chai.files.wordpress.com/2026/10/guide.jpg', { fetch: flaky }), (err) => err.status === 502 && err.transient === true)
+  await stale()
+  await refreshDue(db, { fetch: flaky })
+  assert.equal((await db.one(guide)).image, null)
   // Next time it comes.
   await stale()
   await refreshDue(db, { fetch: fakeFetch })

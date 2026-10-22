@@ -36,7 +36,15 @@ export async function fetchPublic(href, { fetch = publicFetch, accept = '*/*', m
       await res.body?.cancel()
       throw new Problem(502, `${url.hostname} answered with an error (${res.status}).`)
     }
-    return { url, type: (res.headers.get('content-type') ?? '').toLowerCase(), body: await readCapped(res, maxBytes, url) }
+    let body
+    try {
+      body = await readCapped(res, maxBytes, url)
+    } catch (err) {
+      // Too big stays too big; a connection that drops or times out mid-way is worth another go.
+      if (err instanceof Problem) throw err
+      throw Object.assign(new Problem(502, unreachable(url, err)), { transient: true })
+    }
+    return { url, type: (res.headers.get('content-type') ?? '').toLowerCase(), body }
   }
   throw new Problem(502, 'That address sends us round in circles (too many redirects).')
 }

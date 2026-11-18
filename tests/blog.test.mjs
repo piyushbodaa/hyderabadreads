@@ -12,7 +12,7 @@ import { appResponse } from '../server/app.js'
 import { createInvite } from '../server/auth.js'
 import { parseFeed, findFeed, knownFeed, blogAddress, feedLinks, excerptOf } from '../server/rss.js'
 import { checkUrl, isPublicAddress, fetchPublic } from '../server/safe-fetch.js'
-import { loadBlog, refreshDue } from '../server/blogs.js'
+import { addBlog, loadBlog, refreshDue } from '../server/blogs.js'
 import { loadLibrary } from '../server/library.js'
 import { renderBlog, renderPage, routeFor } from '../server/page.js'
 import { pageResponse, feedResponse } from '../server/handlers.js'
@@ -426,4 +426,20 @@ test('a member who removes their blog takes its posts off the site', async () =>
   assert.ok(!(await loadBlog(db)).posts.some((p) => p.writer === 'Swapnil'))
   // Gone, so it can be added again later.
   assert.equal((await blogs(swapnil, { action: 'add', url: 'reader.substack.com' })).status, 200)
+})
+
+test('a feed finishing discovery cannot take a slot filled in the meantime', async () => {
+  const member = await db.one("SELECT id, slug FROM members WHERE name = 'Taraka'")
+  const addSlot = (n) => db.query(
+    'INSERT INTO blogs(member_id, feed_url, home_url) VALUES ($1, $2, $2)',
+    [member.id, `https://slot${n}.example/feed`],
+  )
+  for (let n = 1; n <= 4; n++) await addSlot(n)
+  const fetch = async () => {
+    await addSlot(5)
+    return new Response('<rss><channel><title>Latest</title></channel></rss>')
+  }
+  await assert.rejects(addBlog(db, member, { url: 'https://last.example/feed' }, { fetch }), { status: 409 })
+  const count = await db.one('SELECT count(*)::int AS n FROM blogs WHERE member_id = $1', [member.id])
+  assert.equal(count.n, 5)
 })

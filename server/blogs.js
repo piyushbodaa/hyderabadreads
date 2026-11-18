@@ -61,12 +61,14 @@ export async function blogAction(db, member, input, net = {}) {
       break
     case 'check': {
       const blog = await ownBlog(db, member, input.id)
-      if (blog.recent) throw new Problem(429, 'It was checked a moment ago. Give it a minute.')
+      const claimed = await db.one(
+        `UPDATE blogs SET checked_at = now() WHERE id = $1 AND removed_at IS NULL
+           AND (checked_at IS NULL OR checked_at <= now() - interval '30 seconds') RETURNING id`,
+        [blog.id],
+      )
+      if (!claimed) throw new Problem(429, 'It was checked a moment ago. Give it a minute.')
       // Pictures that couldn't be saved last time get another go.
-      await db.batch([
-        [`UPDATE posts SET image = NULL WHERE blog_id = $1 AND image = ''`, [blog.id]],
-        ['UPDATE blogs SET checked_at = now() WHERE id = $1', [blog.id]],
-      ])
+      await db.query(`UPDATE posts SET image = NULL WHERE blog_id = $1 AND image = ''`, [blog.id])
       await readBlog(db, blog, net, Date.now() + BUDGET)
       break
     }
@@ -146,13 +148,20 @@ export async function addBlog(db, actor, input, net = {}) {
     [feedUrl],
   )
   if (taken) throw new Problem(409, taken.name === member.name ? 'That blog is on the site already.' : `That blog is on the site already, as ${taken.name}’s.`)
-  const blog = await db.one(
-    `INSERT INTO blogs (member_id, feed_url, home_url, title, platform, checked_at, ok_at)
-     VALUES ($1, $2, $3, $4, $5, now(), now())
-     ON CONFLICT DO NOTHING RETURNING id`,
-    [member.id, feedUrl, feed.link ?? new URL(feedUrl).origin, blogTitle(feed.title), platformOf(feedUrl, feed.link, feed.generator)],
-  )
-  if (!blog) throw new Problem(409, 'That blog is on the site already.')
+  // Serialize admission for each member. The second statement sees earlier
+  // registrations that committed while this transaction waited for the lock.
+  const [, inserted] = await db.batch([
+    ['SELECT id FROM members WHERE id = $1 FOR UPDATE', [member.id]],
+    [
+      `INSERT INTO blogs (member_id, feed_url, home_url, title, platform, checked_at, ok_at)
+       SELECT $1, $2, $3, $4, $5, now(), now()
+       WHERE (SELECT count(*) FROM blogs WHERE member_id = $1 AND removed_at IS NULL) < $6
+       ON CONFLICT DO NOTHING RETURNING id`,
+      [member.id, feedUrl, feed.link ?? new URL(feedUrl).origin, blogTitle(feed.title), platformOf(feedUrl, feed.link, feed.generator), MAX_BLOGS],
+    ],
+  ])
+  const [blog] = inserted
+  if (!blog) throw new Problem(409, 'That blog is already on the site or the member’s blog limit has been reached.')
   // The newest pictures now; the rest arrive with the next reading.
   await savePosts(db, blog.id, feed.posts, net, deadline)
   return { id: blog.id, posts: Math.min(feed.posts.length, KEEP) }
@@ -160,7 +169,7 @@ export async function addBlog(db, actor, input, net = {}) {
 
 async function ownBlog(db, member, id) {
   const blog = await db.one(
-    `SELECT id, member_id, feed_url, checked_at > now() - interval '30 seconds' AS recent FROM blogs WHERE id = $1 AND removed_at IS NULL`,
+    `SELECT id, member_id, feed_url FROM blogs WHERE id = $1 AND removed_at IS NULL`,
     [Number(id) || 0],
   )
   if (!blog) throw new Problem(404, 'That blog isn’t on the site any more.')

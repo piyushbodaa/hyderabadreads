@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { localDatabase } from '../server/pglite.js'
 import { appResponse } from '../server/app.js'
+import { loanAction } from '../server/loans.js'
 import { createInvite } from '../server/auth.js'
 import { loadLibrary } from '../server/library.js'
 import { compose } from '../src/lib/digest-text.js'
@@ -125,4 +126,22 @@ test('books out longer than the club allows are flagged, and make the digest', a
   assert.match(text, /• Sat 24 Oct · Chilaka, Jubilee Hills · 1 to 4 PM/)
   assert.match(text, /• Gitanjali \(Rama’s\), with Rishi since/)
   assert.ok(text.endsWith('Browse the library: https://hyderabadreads.fun'))
+})
+
+test('a stale loan action leaves a later state intact', async () => {
+  const member = await db.one("SELECT id FROM members WHERE name = 'Rishi'")
+  const book = await db.one("SELECT id FROM books WHERE slug = 'jaya-pattanaik'")
+  const loan = await db.one("INSERT INTO loans(book_id, borrower_id, status) VALUES ($1, $2, 'requested') RETURNING id", [book.id, member.id])
+  const changingDb = {
+    ...db,
+    one: async (sql, params) => {
+      const row = await db.one(sql, params)
+      if (sql.startsWith('SELECT l.id,')) {
+        await db.query("UPDATE loans SET status = 'lent', lent_at = now() WHERE id = $1", [loan.id])
+      }
+      return row
+    },
+  }
+  await assert.rejects(loanAction(changingDb, member, { action: 'cancel', loan: loan.id }), { status: 409 })
+  assert.equal((await db.one('SELECT status FROM loans WHERE id = $1', [loan.id])).status, 'lent')
 })

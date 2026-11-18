@@ -17,7 +17,15 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
-You don't need a database: locally the site uses PGlite (Postgres in WebAssembly) in `.data/`, filled with the starting shelves on first run. To sign in locally as any member, open [localhost:5173/__dev/invite?name=Piyush](http://localhost:5173/__dev/invite?name=Piyush) and follow the link it prints. That address only exists in local development.
+You don't need a database: locally the site uses PGlite (Postgres in WebAssembly) in `.data/`, filled with the starting shelves on first run. To enable local sign-in links, set a private `HR_DEV_INVITE_KEY` in the shell that starts Vite. For example, start the server in the background, then request the member’s link from the same shell:
+
+```sh
+export HR_DEV_INVITE_KEY="$(openssl rand -hex 32)"
+npm run dev &
+curl -fsS -X POST -H "Authorization: Bearer $HR_DEV_INVITE_KEY" 'http://localhost:5173/__dev/invite?name=Piyush'
+```
+
+Open the returned link in your browser.
 
 - Work on a branch and open a pull request against `main`.
 - Run `npm test` and `npm run build` before you push.

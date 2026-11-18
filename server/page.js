@@ -36,14 +36,14 @@ export function renderPage({ template, notFound, data, route, origin = SITE, tod
   // The blog's posts are drawn here, so the scripts don't need them.
   const { posts = [], blogsDue, ...forScripts } = data
   const html = template
-    .replace(/<!--hr:meta-->[\s\S]*?<!--\/hr:meta-->/, metaTags(page, origin))
-    .replace('</head>', `<script type="application/ld+json">${jsonForScript(ld)}</script>\n  </head>`)
-    .replace('<!--hr:data-->', `<script type="application/json" id="hr-data">${jsonForScript(forScripts)}</script>`)
-    .replace('<!--hr:noscript-->', catalogue(data, book, member))
-    .replace('<!--hr:hero-->', heroHTML(data, today))
-    .replace('<!--hr:writing-->', writingSection(posts, today))
+    .replace(/<!--hr:meta-->[\s\S]*?<!--\/hr:meta-->/, () => metaTags(page, origin))
+    .replace('</head>', () => `<script type="application/ld+json">${jsonForScript(ld)}</script>\n  </head>`)
+    .replace('<!--hr:data-->', () => `<script type="application/json" id="hr-data">${jsonForScript(forScripts)}</script>`)
+    .replace('<!--hr:noscript-->', () => catalogue(data, book, member))
+    .replace('<!--hr:hero-->', () => heroHTML(data, today))
+    .replace('<!--hr:writing-->', () => writingSection(posts, today))
     // In place before the scripts run, so the shelves below don't move.
-    .replace('<p class="section-sub" data-result-count></p>', `<p class="section-sub" data-result-count>${data.books.length} books from ${data.members.length} readers</p>`)
+    .replace('<p class="section-sub" data-result-count></p>', () => `<p class="section-sub" data-result-count>${data.books.length} books from ${data.members.length} readers</p>`)
   return { status: 200, html }
 }
 
@@ -245,9 +245,9 @@ export function renderBlog({ template, blog, by, origin = SITE, today = todayInI
     })),
   }
   const html = template
-    .replace(/<!--hr:meta-->[\s\S]*?<!--\/hr:meta-->/, metaTags(page, origin))
-    .replace('</head>', `<script type="application/ld+json">${jsonForScript(ld)}</script>\n  </head>`)
-    .replace('<!--hr:blog-->', blogBody({ posts, writers: [...writers.values()], writer, blogs: blog.writers, total: blog.posts.length, today }))
+    .replace(/<!--hr:meta-->[\s\S]*?<!--\/hr:meta-->/, () => metaTags(page, origin))
+    .replace('</head>', () => `<script type="application/ld+json">${jsonForScript(ld)}</script>\n  </head>`)
+    .replace('<!--hr:blog-->', () => blogBody({ posts, writers: [...writers.values()], writer, blogs: blog.writers, total: blog.posts.length, today }))
   return { status: 200, html }
 }
 

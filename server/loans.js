@@ -78,11 +78,22 @@ async function bookBySlug(db, slug) {
 
 async function loanById(db, id) {
   const loan = await db.one(
-    `SELECT l.id, l.status, l.borrower_id, b.owner_id, b.title FROM loans l JOIN books b ON b.id = l.book_id WHERE l.id = $1`,
+    `SELECT l.id, l.book_id, l.status, l.borrower_id, b.owner_id, b.title FROM loans l JOIN books b ON b.id = l.book_id WHERE l.id = $1`,
     [Number(id) || 0],
   )
   if (!loan) throw new Problem(404, 'That loan isn’t there any more.')
   return loan
+}
+
+// A later action may already have moved the loan on since it was displayed
+// or read. Check its previous state in the write that advances it.
+async function transition(db, id, before, after) {
+  const timestamp = { lent: 'lent_at', returned: 'returned_at', declined: 'closed_at', cancelled: 'closed_at' }[after]
+  const row = await db.one(
+    `UPDATE loans SET status = $3, ${timestamp} = now() WHERE id = $1 AND status = $2 RETURNING id`,
+    [id, before, after],
+  )
+  if (!row) throw new Problem(409, 'This loan changed. Refresh the shelf to see its current status.')
 }
 
 async function holder(db, bookId) {
@@ -121,13 +132,13 @@ export async function loanAction(db, member, input) {
     case 'cancel': {
       const loan = await loanById(db, input.loan)
       if (loan.borrower_id !== member.id || loan.status !== 'requested') throw new Problem(400, 'Only your own open requests can be cancelled.')
-      await db.query(`UPDATE loans SET status = 'cancelled', closed_at = now() WHERE id = $1`, [loan.id])
+      await transition(db, loan.id, loan.status, 'cancelled')
       return { ok: true }
     }
     case 'decline': {
       const loan = await loanById(db, input.loan)
       if (loan.owner_id !== member.id || loan.status !== 'requested') throw new Problem(400, 'Only requests for your own books can be declined.')
-      await db.query(`UPDATE loans SET status = 'declined', closed_at = now() WHERE id = $1`, [loan.id])
+      await transition(db, loan.id, loan.status, 'declined')
       return { ok: true }
     }
     // The owner hands a book over: to whoever asked, or straight to a member.
@@ -135,8 +146,7 @@ export async function loanAction(db, member, input) {
       if (input.loan) {
         const loan = await loanById(db, input.loan)
         if (loan.owner_id !== member.id || loan.status !== 'requested') throw new Problem(400, 'Only requests for your own books can be lent.')
-        const book = await db.one('SELECT book_id FROM loans WHERE id = $1', [loan.id])
-        await guardOut(db, book.book_id, () => db.query(`UPDATE loans SET status = 'lent', lent_at = now() WHERE id = $1`, [loan.id]))
+        await guardOut(db, loan.book_id, () => transition(db, loan.id, loan.status, 'lent'))
         return { ok: true }
       }
       const book = await bookBySlug(db, input.book)
@@ -158,7 +168,7 @@ export async function loanAction(db, member, input) {
       if (book.sample) throw new Problem(400, 'That’s a sample book, so it can’t be borrowed.')
       await guardOut(db, book.id, async () => {
         const request = await db.one(`SELECT id FROM loans WHERE book_id = $1 AND borrower_id = $2 AND status = 'requested'`, [book.id, member.id])
-        if (request) await db.query(`UPDATE loans SET status = 'lent', lent_at = now() WHERE id = $1`, [request.id])
+        if (request) await transition(db, request.id, 'requested', 'lent')
         else await db.query(`INSERT INTO loans (book_id, borrower_id, status, lent_at) VALUES ($1, $2, 'lent', now())`, [book.id, member.id])
       })
       return { ok: true, owner: book.owner }
@@ -169,14 +179,14 @@ export async function loanAction(db, member, input) {
       if (loan.status !== 'lent' || (loan.owner_id !== member.id && loan.borrower_id !== member.id)) {
         throw new Problem(400, 'Only the owner or the borrower can mark a book as returned.')
       }
-      await db.query(`UPDATE loans SET status = 'returned', returned_at = now() WHERE id = $1`, [loan.id])
+      await transition(db, loan.id, loan.status, 'returned')
       return { ok: true }
     }
     // The owner undoes a loan that was marked by mistake.
     case 'undo': {
       const loan = await loanById(db, input.loan)
       if (loan.owner_id !== member.id || loan.status !== 'lent') throw new Problem(400, 'Only the owner can undo a loan.')
-      await db.query(`UPDATE loans SET status = 'cancelled', closed_at = now() WHERE id = $1`, [loan.id])
+      await transition(db, loan.id, loan.status, 'cancelled')
       return { ok: true }
     }
     default:

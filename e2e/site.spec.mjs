@@ -4,6 +4,19 @@ import { expect, test } from '@playwright/test'
 
 const pageData = (page) => page.evaluate(() => JSON.parse(document.getElementById('hr-data').textContent))
 
+const devInvite = async (request, name) => {
+  const response = await request.post(`/__dev/invite?name=${name}`, {
+    headers: { Authorization: `Bearer ${process.env.HR_DEV_INVITE_KEY}` },
+  })
+  expect(response.ok()).toBe(true)
+  return (await response.text()).trim()
+}
+
+test('the development invite helper requires the server key', async ({ request }) => {
+  expect((await request.post('/__dev/invite?name=Piyush')).status()).toBe(403)
+  expect((await request.get('/__dev/invite?name=Piyush')).status()).toBe(403)
+})
+
 test('the shelves show every book, and search narrows them down', async ({ page }) => {
   await page.goto('/')
   const data = await pageData(page)
@@ -56,7 +69,7 @@ test('nothing makes the page scroll sideways', async ({ page }) => {
 test('a member with no books has no shelf, but Readers lists them and says how to fill it', async ({ page }, testInfo) => {
   // Local only: sign in as a member (each size its own), and clear their sample books.
   const name = testInfo.project.name === 'phone' ? 'Vamshi' : 'Taraka'
-  const link = (await (await page.request.get(`/__dev/invite?name=${name}`)).text()).trim()
+  const link = await devInvite(page.request, name)
   await page.goto(new URL(link).pathname)
   const cleared = await page.request.post('/api/shelf', { data: { action: 'clear-samples' }, headers: { Origin: new URL(page.url()).origin } })
   expect(cleared.ok()).toBe(true)
@@ -90,7 +103,7 @@ test('a member signs in with their link and lands on their shelf', async ({ page
   // someone different.
   const name = testInfo.project.name === 'phone' ? 'Piyush' : 'Rama'
   // Local only: the dev server prints a sign-in link for any member.
-  const link = (await (await request.get(`/__dev/invite?name=${name}`)).text()).trim()
+  const link = await devInvite(request, name)
   expect(link).toMatch(/\/join\/[\w-]+$/)
   await page.goto(new URL(link).pathname)
   await expect(page).toHaveURL(/\/me/)

@@ -2,9 +2,12 @@
 // against a fresh database with the starting shelves.
 //
 //   npm run build && npm run test:browser
+import { randomBytes } from 'node:crypto'
 import { defineConfig, devices } from '@playwright/test'
 
 const PORT = 4173
+// The test workers and their own preview server share a per-run invite key.
+process.env.HR_DEV_INVITE_KEY ??= randomBytes(32).toString('hex')
 
 export default defineConfig({
   testDir: 'e2e',
@@ -25,6 +28,6 @@ export default defineConfig({
   webServer: {
     command: `node scripts/serve-build.mjs ${PORT}`,
     url: `http://127.0.0.1:${PORT}`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
 })

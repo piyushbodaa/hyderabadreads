@@ -122,6 +122,20 @@ test('text from the database can’t break out of the page', () => {
   assert.match(html, /\\u003c\/script>/)
 })
 
+test('replacement notation in a book title stays literal in the public page and embedded data', () => {
+  const title = "A guide to $& and $$"
+  const data = {
+    members: [{ name: 'Eve', slug: 'eve' }],
+    books: [{ id: 'guide', title, author: 'Eve', owner: 'Eve', genre: 'Other', language: 'English', added: '2026-10-21' }],
+    meetups: [],
+    club: {},
+  }
+  const { html } = renderPage({ template, notFound, data, route: routeFor('book', 'guide') })
+  const json = html.match(/<script type="application\/json" id="hr-data">(.*?)<\/script>/s)[1]
+  assert.equal(JSON.parse(json).books[0].title, title)
+  assert.ok(html.includes('A guide to $&amp; and $$ by Eve'))
+})
+
 test('feeds: llms.txt, llms-full.txt, library.json, sitemap and calendar', async () => {
   const data = await loadLibrary(db)
   const today = '2026-10-21'

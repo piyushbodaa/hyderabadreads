@@ -35,8 +35,14 @@ export function serverPlugin({ dataDir = fileURLToPath(new URL('.data/pglite', r
   const middleware = (templates) => async (req, res, next) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`)
 
-    // Local only: a sign-in link for any member, e.g. /__dev/invite?name=Piyush.
+    // Only a developer with the server key can create a sign-in link.
     if (url.pathname === '/__dev/invite') {
+      const key = process.env.HR_DEV_INVITE_KEY
+      res.setHeader('Cache-Control', 'no-store')
+      if (req.method !== 'POST' || !key || req.headers.authorization !== `Bearer ${key}`) {
+        res.statusCode = 403
+        return res.end('Forbidden')
+      }
       const db = await database()
       const member = await db.one('SELECT id, name FROM members WHERE lower(name) = lower($1) AND removed_at IS NULL', [url.searchParams.get('name') ?? ''])
       res.setHeader('Content-Type', 'text/plain; charset=utf-8')

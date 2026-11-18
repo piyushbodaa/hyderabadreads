@@ -98,7 +98,7 @@ export async function findFeed(input, net = {}) {
 
 // Feeds a page points to with <link rel="alternate">, leaving out comment feeds.
 export function feedLinks(html, base) {
-  return [...String(html).matchAll(/<link\b[^>]*>/gi)]
+  return [...String(html).matchAll(/<link\b[^<>]*>/gi)]
     .map((m) => attributes(m[0].slice(5)))
     .filter((a) => /(^|\s)alternate(\s|$)/i.test(a.rel ?? '') && /application\/(rss|atom)\+xml/i.test(a.type ?? '') && a.href && !/comment/i.test(`${a.title ?? ''} ${a.href}`))
     .map((a) => absolute(a.href, base))
@@ -123,23 +123,26 @@ export function platformOf(feedUrl, link, generator = '') {
 // RSS 2.0, RSS 1.0 or Atom → the blog's title, link and newest posts; null
 // for anything that isn't a feed.
 export function parseFeed(xml, base) {
-  const doc = String(xml ?? '').replace(/^﻿/, '').replace(/<!--[\s\S]*?-->/g, '')
+  const doc = delimitedText(String(xml ?? '').replace(/^﻿/, ''), '<!--', '-->', (s) => s, () => '')
   const rss = /<(rss|rdf:RDF)[\s>]/i.test(doc)
   if (!rss && !/<feed[\s>]/i.test(doc)) return null
   const itemTag = rss ? 'item' : 'entry'
   const start = doc.search(new RegExp(`<${itemTag}[\\s>]`, 'i'))
-  const head = (start < 0 ? doc : doc.slice(0, start)).replace(/<(image|author|itunes:owner)(?=[\s>])[\s\S]*?<\/\1\s*>/gi, '')
+  const head = withoutElements(start < 0 ? doc : doc.slice(0, start), ['image', 'author', 'itunes:owner'])
   const link = rss ? cleanLink(textOf(head, 'link'), base) : atomLink(head, base)
-  const posts = elements(doc, itemTag)
-    .map((e) => postFrom(e.raw, link ?? base))
-    .filter(Boolean)
-    .sort((a, b) => (b.published ?? '').localeCompare(a.published ?? ''))
+  const posts = []
+  for (const item of matchingElements(doc, itemTag)) {
+    if (!item.raw) continue
+    const post = postFrom(item.raw, link ?? base)
+    if (post) posts.push(post)
+  }
+  posts.sort((a, b) => (b.published ?? '').localeCompare(a.published ?? ''))
   return { title: htmlToText(textOf(head, 'title')).slice(0, 200), link, generator: textOf(head, 'generator'), posts }
 }
 
 function postFrom(raw, base) {
   // The post's own tags, without its text, where a stray <title> or <link> could hide.
-  const meta = raw.replace(/<(content:encoded|content|description|summary)(?=[\s>])[\s\S]*?<\/\1\s*>/gi, '')
+  const meta = withoutElements(raw, ['content:encoded', 'content', 'description', 'summary'])
   const html = textOf(raw, 'content:encoded', 'content')
   const summary = textOf(raw, 'description', 'summary')
   const guid = first(meta, 'guid')
@@ -172,7 +175,14 @@ function cleanLink(href, base) {
   const href2 = absolute(href, base)
   if (!href2) return null
   const url = new URL(href2)
-  for (const key of [...url.searchParams.keys()]) if (/^utm_/i.test(key) || (key === 'source' && /^rss/i.test(url.searchParams.get(key)))) url.searchParams.delete(key)
+  const removeSource = /^rss/i.test(url.searchParams.get('source') ?? '')
+  const kept = new URLSearchParams()
+  let changed = false
+  for (const [key, value] of url.searchParams) {
+    if (/^utm_/i.test(key) || (key === 'source' && removeSource)) changed = true
+    else kept.append(key, value)
+  }
+  if (changed) url.search = kept.toString()
   return url.href
 }
 
@@ -204,7 +214,7 @@ export function excerptOf(summaryHtml, contentHtml) {
 
 // The text of a post's paragraphs, skipping any that are only a link.
 function paragraphs(html) {
-  const ps = [...html.matchAll(/<p(?=[\s>])[\s\S]*?<\/p>/gi)].map((m) => m[0]).filter((p) => !/^<p[^>]*>\s*<a\b[^>]*>[\s\S]*?<\/a>\s*<\/p>$/i.test(p))
+  const ps = elements(html, 'p').map((p) => p.raw).filter((p) => p && !/^\s*<a\b[^<>]*>[\s\S]*?<\/a>\s*$/i.test(p))
   return htmlToText(ps.length ? ps.slice(0, 6).join(' ') : html)
 }
 
@@ -223,7 +233,7 @@ function pictureOf(meta, html, base) {
     ...elements(meta, 'enclosure').filter(({ attrs: a }) => /^image\//i.test(a.type ?? '') || (!a.type && /\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(a.url ?? ''))).map((e) => e.attrs.url),
     ...elements(meta, 'media:content').filter(({ attrs: a }) => a.medium === 'image' || /^image\//i.test(a.type ?? '')).map((e) => e.attrs.url),
     ...elements(meta, 'media:thumbnail').map((e) => e.attrs.url),
-    ...[...String(html ?? '').matchAll(/<img\b[^>]*>/gi)]
+    ...[...String(html ?? '').matchAll(/<img\b[^<>]*>/gi)]
       .map((m) => attributes(m[0].slice(4)))
       .filter((a) => !(Number(a.width) <= 2 || Number(a.height) <= 2))
       .map((a) => a['data-src'] || a.src),
@@ -257,10 +267,9 @@ export function decodeEntities(s) {
 // Plain text from a bit of HTML: no scripts, captions or tags, entities decoded.
 export function htmlToText(html) {
   return decodeEntities(
-    String(html ?? '')
-      .replace(/<(script|style|figcaption|noscript|template|svg|iframe|button|select)(?=[\s>])[\s\S]*?<\/\1\s*>/gi, ' ')
+    withoutElements(String(html ?? ''), ['script', 'style', 'figcaption', 'noscript', 'template', 'svg', 'iframe', 'button', 'select'], ' ')
       .replace(/<br\s*\/?>|<\/(p|div|h[1-6]|li|blockquote|figure|tr|section|article)>/gi, ' ')
-      .replace(/<[^>]*>/g, ''),
+      .replace(/<[^<>]*>/g, ''),
   )
     .replace(/\s+/g, ' ')
     .trim()
@@ -268,36 +277,77 @@ export function htmlToText(html) {
 
 // An element's text: CDATA as it is, everything else with entities decoded.
 function text(raw) {
-  let out = ''
-  let last = 0
-  for (const m of raw.matchAll(/<!\[CDATA\[([\s\S]*?)\]\]>/g)) {
-    out += decodeEntities(raw.slice(last, m.index)) + m[1]
-    last = m.index + m[0].length
+  return delimitedText(raw, '<![CDATA[', ']]>', decodeEntities, (s) => s)
+}
+
+// Consume each complete region once. An incomplete final region stays plain.
+function delimitedText(source, opening, closing, plain, enclosed) {
+  const parts = []
+  let cursor = 0
+  while (true) {
+    const start = source.indexOf(opening, cursor)
+    if (start < 0) break
+    const content = start + opening.length
+    const end = source.indexOf(closing, content)
+    if (end < 0) break
+    parts.push(plain(source.slice(cursor, start)), enclosed(source.slice(content, end)))
+    cursor = end + closing.length
   }
-  return out + decodeEntities(raw.slice(last))
+  parts.push(plain(source.slice(cursor)))
+  return parts.join('')
 }
 
 const pattern = (name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 // Every <name> in a block of XML: its attributes and the markup inside it.
-function elements(block, name, limit = Infinity) {
-  const open = new RegExp(`<${pattern(name)}(?=[\\s/>])([^>]*?)(/?)>`, 'gi')
-  const out = []
-  for (let m; out.length < limit && (m = open.exec(block)); ) {
-    if (m[2] === '/') {
-      out.push({ attrs: attributes(m[1]), raw: '' })
-      continue
+function* matchingElements(block, name) {
+  const open = new RegExp(`<${pattern(name)}(?=[\\s/>])([^<>]*?)(/?)>`, 'gi')
+  const close = new RegExp(`</${pattern(name)}\\s*>`, 'gi')
+  let exhausted = false
+  for (let m; (m = open.exec(block)); ) {
+    const start = open.lastIndex
+    let end = null
+    if (m[2] !== '/' && !exhausted) {
+      close.lastIndex = start
+      end = close.exec(block)
+      if (end) open.lastIndex = close.lastIndex
+      else exhausted = true // no later opening can have a closing tag either
     }
-    const close = new RegExp(`</${pattern(name)}\\s*>`, 'gi')
-    close.lastIndex = open.lastIndex
-    const end = close.exec(block)
-    out.push({ attrs: attributes(m[1]), raw: end ? block.slice(open.lastIndex, end.index) : '' })
-    if (end) open.lastIndex = close.lastIndex
+    yield { attributes: m[1], raw: end ? block.slice(start, end.index) : '',
+      start: m.index, end: (end || m[2] === '/') ? open.lastIndex : null }
   }
-  return out
 }
 
-const first = (block, name) => elements(block, name, 1)[0] ?? null
+function parsedElement(match) {
+  return { attrs: attributes(match.attributes), raw: match.raw }
+}
+
+function elements(block, name) {
+  return Array.from(matchingElements(block, name), parsedElement)
+}
+
+// A fixed set of tag names, each processed in one forward pass.
+function withoutElements(block, names, replacement = '') {
+  for (const name of names) {
+    const kept = []
+    let cursor = 0
+    for (const match of matchingElements(block, name)) {
+      if (match.end === null) continue
+      kept.push(block.slice(cursor, match.start), replacement)
+      cursor = match.end
+    }
+    if (cursor) {
+      kept.push(block.slice(cursor))
+      block = kept.join('')
+    }
+  }
+  return block
+}
+
+function first(block, name) {
+  const match = matchingElements(block, name).next().value
+  return match ? parsedElement(match) : null
+}
 
 // The text of the first of these elements that has any.
 function textOf(block, ...names) {
@@ -311,6 +361,8 @@ function textOf(block, ...names) {
 
 function attributes(source) {
   const out = {}
-  for (const m of String(source).matchAll(/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) out[m[1].toLowerCase()] = decodeEntities(m[2] ?? m[3])
+  for (const m of String(source).matchAll(/([\w:.-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'))?/g)) {
+    if (m[2] !== undefined || m[3] !== undefined) out[m[1].toLowerCase()] = decodeEntities(m[2] ?? m[3])
+  }
   return out
 }

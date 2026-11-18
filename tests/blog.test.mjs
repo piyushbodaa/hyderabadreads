@@ -112,6 +112,14 @@ test('a page that isn’t a feed is nothing, and posts that can’t be linked to
   assert.equal(excerptOf('A long enough summary of the post, with more words than sixty characters. Continue reading →', ''), 'A long enough summary of the post, with more words than sixty characters.')
 })
 
+test('truncated markup leaves complete posts intact and ignores unfinished entries', () => {
+  const input = '<rss><channel><!-- archived --><item><title><![CDATA[First book]]></title>' +
+    '<link>https://reader.example/books</link></item><item><title>Draft</title><item>'
+  const feed = parseFeed(input, 'https://reader.example/feed')
+  assert.deepEqual(feed.posts.map((p) => p.title), ['First book'])
+  assert.equal(parseFeed('<rss><channel><!-- unfinished comment', 'https://reader.example/feed').posts.length, 0)
+})
+
 // ── Finding a blog's feed ─────────────────────────────────────────────────
 
 test('any address on a blog leads to its feed', () => {
